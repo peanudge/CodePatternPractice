@@ -1,0 +1,63 @@
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using WebDatabaseProject;
+using WebDatabaseProject.EAV;
+
+using var db = new BlogContext();
+
+var allBlogs = db.Blogs.ToList();
+db.Blogs.RemoveRange(allBlogs);
+db.SaveChanges();
+Console.WriteLine("All blogs in the database:" + allBlogs.Count);
+
+
+db.Add(new Blog
+{
+    Name = "Blog - " + Guid.NewGuid().ToString("N"),
+    Configs = new List<BlogConfig> {
+            new BlogConfig {
+                Key = "Count",
+                ValueTypeId = ValueTypeId.Int,
+                Value = 100.ToString()
+            },
+            new BlogConfig {
+                Key = "CreatedAt",
+                ValueTypeId = ValueTypeId.DateTime,
+                Value = DateTime.UtcNow.ToString()
+            },
+            new BlogConfig {
+                Key = "UpdatedAt",
+                ValueTypeId = ValueTypeId.DateTime,
+                Value = "2021-09-01T00:00:00Z"
+            },
+            new BlogConfig {
+                Key = "User",
+                ValueTypeId = ValueTypeId.User,
+                Value = JsonSerializer.Serialize(new User { Name = "Jiho" })
+            },
+            new BlogConfig {
+                Key = "InvalidData",
+                ValueTypeId = ValueTypeId.Bool,
+                Value = "Invalid Data"
+            }
+        }
+});
+
+db.SaveChanges();
+
+var blogs = await db.Blogs
+    .Include(b => b.Configs)
+    .ToListAsync();
+
+foreach (var blog in blogs)
+{
+    Console.WriteLine(blog.Id + ", " + blog.Name);
+    Console.WriteLine("Configs Count: " + blog.Configs.Count);
+
+    var count = blog.Count;
+    var createdAt = blog.CreatedAt;
+
+    Console.WriteLine("Count: " + count);
+    Console.WriteLine("CreatedAt: " + createdAt);
+}
