@@ -1,8 +1,6 @@
 namespace WebDatabaseProject;
 
-using System.ComponentModel.DataAnnotations.Schema;
 using WebDatabaseProject.EAV;
-
 
 
 public sealed class BlogConfig : IIdentityEntity
@@ -15,7 +13,7 @@ public sealed class BlogConfig : IIdentityEntity
 
     public ValueTypeId ValueTypeId { get; set; } = default!;
 
-    public ValueTypeBase ValueType => ValueTypeFactory.CreateValueType(ValueTypeId);
+    public ValueTypeBase ValueType => BlogConfigValueTypeFactory.CreateValueType(ValueTypeId);
 
     public string Value { get; set; } = default!;
 

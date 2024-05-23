@@ -1,6 +1,6 @@
 namespace WebDatabaseProject.EAV;
 
-public class ValueTypeFactory
+public class BlogConfigValueTypeFactory
 {
     public static ValueTypeBase CreateValueType(ValueTypeId valueTypeId)
     {
