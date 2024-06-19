@@ -1,61 +1,29 @@
-﻿PrepareTimeoutTimer prepareTimeoutTimer = new();
-prepareTimeoutTimer.PrepareTimeout(1);
-prepareTimeoutTimer.PrepareTimeout(2);
-await Task.Delay(1000);
-prepareTimeoutTimer.ResolveTimeout(1);
-prepareTimeoutTimer.PrepareTimeout(2);
-await Task.Delay(3000);
+﻿using Serilog;
+using ConsoleApp;
+// HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
-// AirflowMonitoringService => Delegate AirflowPreparationTimeoutTimer => Resolve, Prepare
+// builder.Services.AddHostedService<Worker>();
 
-public class PrepareTimeoutTimer
-{
-    private Dictionary<long, DateTimeOffset> _prepareTimes = new();
-    private TimeSpan _timeoutMilliseconds = TimeSpan.FromMilliseconds(2000);
+// IHost host = builder.Build();
 
-    private Timer _timeoutTimer;
+// host.Run();
 
-    public PrepareTimeoutTimer(
-        Action onTimeout = null,
-        Action onResolved = null,
-        TimeSpan? timeoutMilliseconds = null
-    )
-    {
-        _timeoutTimer = new Timer(new TimerCallback(_ =>
-        {
-            CheckPrepareTimeout();
-        }));
+using var log = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console(outputTemplate:
+        "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+    .Enrich.FromLogContext()
+    .WriteTo.File(
+        "logs/log_.txt",
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
+        rollingInterval: RollingInterval.Day,
+        retainedFileTimeLimit: TimeSpan.FromDays(7))
+    .CreateLogger();
 
-        _timeoutTimer.Change(
-            dueTime: 0,
-            period: 100
-        );
-    }
+Log.Logger = log;
 
-    private void CheckPrepareTimeout()
-    {
-        var now = DateTimeOffset.UtcNow;
-        Console.WriteLine($"Tick {now}");
-        foreach (var (id, preparedTime) in _prepareTimes)
-        {
-            if (now >= preparedTime.Add(_timeoutMilliseconds))
-            {
-                // Timeout
-                Console.WriteLine($"Id:{id} => Timeout!!");
-                _prepareTimes.Remove(id);
-            }
-        }
-    }
+var user = new User();
+user.DoSomething();
 
-    public void PrepareTimeout(long id)
-    {
-        Console.WriteLine("Prepare => " + id);
-        _prepareTimes[id] = DateTimeOffset.UtcNow;
-    }
+await Log.CloseAndFlushAsync();
 
-    public void ResolveTimeout(long id)
-    {
-        Console.WriteLine("Prepare => " + id);
-        _prepareTimes.Remove(id);
-    }
-}
