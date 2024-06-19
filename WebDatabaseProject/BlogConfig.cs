@@ -22,4 +22,3 @@ public sealed class BlogConfig : IIdentityEntity
         return ValueType.TryParse(Value, out parsedValue);
     }
 }
-

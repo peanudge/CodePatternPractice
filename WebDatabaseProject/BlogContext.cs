@@ -1,14 +1,16 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using WebDatabaseProject.EAV;
+
 
 namespace WebDatabaseProject;
 
 public class BlogContext : DbContext
 {
-    public DbSet<Blog> Blogs { get; set; } = null!;
+    public DbSet<BlogBase> Blogs { get; set; } = null!;
+    public DbSet<ShopBlog> ShopBlogs { get; set; } = null!;
+    public DbSet<TechBlog> TechBlogs { get; set; } = null!;
+
 
     public DbSet<BlogConfig> BlogConfigs { get; set; } = null!;
 
@@ -21,18 +23,29 @@ public class BlogContext : DbContext
         {
             optionsBuilder.UseSqlServer("Server=localhost,1433;User Id=sa;Password=MyPass@word;TrustServerCertificate=true");
         }
-        // optionsBuilder.LogTo(Console.WriteLine);
+        optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Blog>()
+        modelBuilder.Entity<BlogBase>()
             .HasMany(b => b.Configs)
             .WithOne()
             .HasForeignKey(v => v.BlogId);
 
+
+        modelBuilder.Entity<BlogBase>()
+            .HasMany(b => b.ChildBlogs)
+            .WithOne(ch => ch.ParentBlog)
+            .HasForeignKey(ch => ch.ParentBlogId)
+            .OnDelete(DeleteBehavior.ClientCascade);
+
+        // INFO: if you want to use Table Per Table, uncomment this.
+        // modelBuilder.Entity<BlogBase>().ToTable("Blogs");
+        // modelBuilder.Entity<ShopBlog>().ToTable("ShopBlogs");
+        // modelBuilder.Entity<TechBlog>().ToTable("TechBlogs");
 
         modelBuilder.Entity<BlogConfig>()
             .HasIndex(v => new { v.BlogId, v.Key })

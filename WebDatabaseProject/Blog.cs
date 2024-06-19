@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebDatabaseProject;
 
@@ -15,7 +16,7 @@ public abstract class IdentityEntity : IIdentityEntity
 }
 
 
-public class Blog : IdentityEntity
+public abstract class BlogBase : IdentityEntity
 {
     public string Name { get; set; } = default!;
     public ICollection<BlogConfig> Configs { get; set; } = new List<BlogConfig>();
@@ -24,6 +25,13 @@ public class Blog : IdentityEntity
     public DateTime? UpdatedAt => GetConfigValue<DateTime>("UpdatedAt");
     public User? User => GetConfigValue<User>("User");
 
+
+    public long? ParentBlogId { get; set; }
+
+    [ForeignKey(nameof(ParentBlogId))]
+    public BlogBase? ParentBlog { get; set; }
+
+    public ICollection<BlogBase> ChildBlogs { get; set; } = new List<BlogBase>();
 
     private T? GetConfigValue<T>(string key)
     {
@@ -44,3 +52,12 @@ public class Blog : IdentityEntity
     }
 }
 
+public class TechBlog : BlogBase
+{
+    public string? GithubUrl { get; set; }
+}
+
+public class ShopBlog : BlogBase
+{
+    public string? ShopUrl { get; set; }
+}
