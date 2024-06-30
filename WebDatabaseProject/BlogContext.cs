@@ -43,9 +43,9 @@ public class BlogContext : DbContext
             .OnDelete(DeleteBehavior.ClientCascade);
 
         // INFO: if you want to use Table Per Table, uncomment this.
-        // modelBuilder.Entity<BlogBase>().ToTable("Blogs");
-        // modelBuilder.Entity<ShopBlog>().ToTable("ShopBlogs");
-        // modelBuilder.Entity<TechBlog>().ToTable("TechBlogs");
+        modelBuilder.Entity<BlogBase>().ToTable("Blogs");
+        modelBuilder.Entity<ShopBlog>().ToTable("ShopBlogs");
+        modelBuilder.Entity<TechBlog>().ToTable("TechBlogs");
 
         modelBuilder.Entity<BlogConfig>()
             .HasIndex(v => new { v.BlogId, v.Key })

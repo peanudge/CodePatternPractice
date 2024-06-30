@@ -30,10 +30,6 @@ namespace WebDatabaseProject.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -45,9 +41,7 @@ namespace WebDatabaseProject.Migrations
 
                     b.HasIndex("ParentBlogId");
 
-                    b.ToTable("Blogs");
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("BlogBase");
+                    b.ToTable("Blogs", (string)null);
                 });
 
             modelBuilder.Entity("WebDatabaseProject.BlogConfig", b =>
@@ -87,7 +81,7 @@ namespace WebDatabaseProject.Migrations
                     b.Property<string>("ShopUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasDiscriminator().HasValue("ShopBlog");
+                    b.ToTable("ShopBlogs", (string)null);
                 });
 
             modelBuilder.Entity("WebDatabaseProject.TechBlog", b =>
@@ -97,7 +91,7 @@ namespace WebDatabaseProject.Migrations
                     b.Property<string>("GithubUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasDiscriminator().HasValue("TechBlog");
+                    b.ToTable("TechBlogs", (string)null);
                 });
 
             modelBuilder.Entity("WebDatabaseProject.BlogBase", b =>
@@ -116,6 +110,24 @@ namespace WebDatabaseProject.Migrations
                         .WithMany("Configs")
                         .HasForeignKey("BlogId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WebDatabaseProject.ShopBlog", b =>
+                {
+                    b.HasOne("WebDatabaseProject.BlogBase", null)
+                        .WithOne()
+                        .HasForeignKey("WebDatabaseProject.ShopBlog", "Id")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WebDatabaseProject.TechBlog", b =>
+                {
+                    b.HasOne("WebDatabaseProject.BlogBase", null)
+                        .WithOne()
+                        .HasForeignKey("WebDatabaseProject.TechBlog", "Id")
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
                 });
 

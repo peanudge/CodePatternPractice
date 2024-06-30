@@ -3,51 +3,63 @@ using WebDatabaseProject;
 
 using var db = new BlogContext();
 
-var allBlogs = db.Blogs.ToList();
-db.Blogs.RemoveRange(allBlogs);
-db.SaveChanges();
-Console.WriteLine("All blogs in the database:" + allBlogs.Count);
+// var allBlogs = db.Blogs.ToList();
+// db.Blogs.RemoveRange(allBlogs);
+// db.SaveChanges();
+// Console.WriteLine("All blogs in the database:" + allBlogs.Count);
 
 
-db.Add(new TechBlog()
-{
-    Name = "Tech Blog - " + Guid.NewGuid().ToString("N"),
-    GithubUrl = "http://github.com/peanudge",
-    ParentBlogId = null
-});
+// db.Add(new TechBlog()
+// {
+//     Name = "Tech Blog - " + Guid.NewGuid().ToString("N"),
+//     GithubUrl = "http://github.com/peanudge",
+//     ParentBlogId = null
+// });
 
-db.Add(new ShopBlog()
-{
-    Name = "Shop Blog - " + Guid.NewGuid().ToString("N"),
-    ShopUrl = "http://store/peanudge",
-    ChildBlogs = new List<BlogBase> {
-        new ShopBlog {
-            Name = "Child Shop Blog - " + Guid.NewGuid().ToString("N"),
-            ShopUrl = "http://store/peanudge/sub1",
-        },
-        new ShopBlog {
-            Name = "Child Shop Blog - " + Guid.NewGuid().ToString("N"),
-            ShopUrl = "http://store/peanudge/sub2",
-        }
-    }
-});
+// db.Add(new ShopBlog()
+// {
+//     Name = "Shop Blog - " + Guid.NewGuid().ToString("N"),
+//     ShopUrl = "http://store/peanudge",
+//     ChildBlogs = new List<BlogBase> {
+//         new ShopBlog {
+//             Name = "Child Shop Blog - " + Guid.NewGuid().ToString("N"),
+//             ShopUrl = "http://store/peanudge/sub1",
+//         },
+//         new ShopBlog {
+//             Name = "Child Shop Blog - " + Guid.NewGuid().ToString("N"),
+//             ShopUrl = "http://store/peanudge/sub2",
+//         }
+//     }
+// });
 
 
-db.SaveChanges();
+// db.SaveChanges();
 
-var blogs = await db.Blogs
-    .Include(b => b.ChildBlogs)
-    // .Include(b => b.Configs)
+var blogNames = await db.Blogs
+    .Select(b => new { b.Name, b.Id, b.CreatedAt })
     .ToListAsync();
+
+foreach (var blogName in blogNames)
+{
+    Console.WriteLine(blogName);
+}
+
+
+
+var blogs = await db.Blogs.ToListAsync();
+
+
 
 foreach (var blog in blogs)
 {
-    Console.WriteLine(blog.Id + ", " + blog.Name);
-    foreach (var childBlogs in blog.ChildBlogs)
-    {
-        Console.WriteLine("     Child Blog: " + childBlogs.Id + ", " + childBlogs.Name);
-    }
+    Console.WriteLine(blog.Name);
 }
+
+// SELECT [b].[Id], [b].[Discriminator], [b].[Name], [b].[ParentBlogId], [b].[ShopUrl], [b].[GithubUrl]
+//   FROM [Blogs] AS [b]
+
+record BlogName(string Name);
+
 
 // foreach (var blog in blogs)
 // {
