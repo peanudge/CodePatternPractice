@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Timezone", "TimeZone\Timezo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebDatabaseProject.Tests", "WebDatabaseProject.Tests\WebDatabaseProject.Tests.csproj", "{710DF874-6855-4646-BAFC-43489E18DAC6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphDataStructure", "GraphDataStructure\GraphDataStructure.csproj", "{B38AA478-6175-4EA1-9D9A-2F291D928743}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{710DF874-6855-4646-BAFC-43489E18DAC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{710DF874-6855-4646-BAFC-43489E18DAC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{710DF874-6855-4646-BAFC-43489E18DAC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B38AA478-6175-4EA1-9D9A-2F291D928743}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B38AA478-6175-4EA1-9D9A-2F291D928743}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B38AA478-6175-4EA1-9D9A-2F291D928743}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B38AA478-6175-4EA1-9D9A-2F291D928743}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
