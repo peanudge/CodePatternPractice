@@ -1,6 +1,4 @@
-﻿
-
-using System.Text.Json;
+﻿using System.Text.Json;
 using GraphDataStructure;
 
 var nodeA = new Node
@@ -43,12 +41,30 @@ var linkBC = new NodeLink
     DestPortName = nodeC.InputPorts[0].Name
 };
 
-var graph = new NodeGraph(new List<Node> { nodeA, nodeB }, new List<NodeLink> { linkAB, linkBC });
-var encodedGraph = JsonSerializer.Serialize(graph, new JsonSerializerOptions { WriteIndented = true });
+var graph = new NodeGraph(
+    new List<Node> { nodeA, nodeB, nodeC },
+    new List<NodeLink> { linkAB, linkBC }
+);
+
+var encodedGraph = JsonSerializer.Serialize(graph, new JsonSerializerOptions
+{
+    WriteIndented = true,
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+});
 
 Console.WriteLine("Serialized Graph:");
 Console.WriteLine(encodedGraph);
 
+graph.Build();
 
-// TODO: Deserialized Graph
+var buildedEncodedGraph = JsonSerializer.Serialize(graph, new JsonSerializerOptions
+{
+    WriteIndented = true,
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+});
+
+Console.WriteLine("Serialized Graph after build:");
+Console.WriteLine(buildedEncodedGraph);
+
+// TODO: Deserialized Graph & Build Linking NodePorts and NodeLinks
 

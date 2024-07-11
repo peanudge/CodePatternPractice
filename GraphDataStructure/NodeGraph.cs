@@ -20,15 +20,23 @@ public class NodeGraph
 
     public void Build()
     {
+        var nodeDict = Nodes.ToDictionary(node => node.Id);
+
         // Link Node's Ports with Edges
-        foreach (var node in Nodes)
+        foreach (var link in Links)
         {
-            // node.InputPorts.ForEach(port => {
-            //     var link = Links.Where(link => link.DestNodeId == node.Id && link.DestPortName == port.Name).FirstOrDefault();
-            //     if (link != null) {
-            //         port.Link = link;
-            //     }
-            // });
+            var targetOutputPort = nodeDict[link.SrcNodeId].OutputPorts
+                .Where(port => port.Name == link.SrcPortName)
+                .FirstOrDefault();
+
+            if (targetOutputPort is not null) { targetOutputPort.Link = link; }
+
+
+            var targetInputPort = nodeDict[link.DestNodeId].InputPorts
+                .Where(port => port.Name == link.DestPortName)
+                .FirstOrDefault();
+
+            if (targetInputPort is not null) targetInputPort.Link = link;
         }
     }
 }
@@ -65,18 +73,18 @@ public class InputPort
 {
     public string Name { get; set; } = null!;
 
-    [JsonIgnore]
-    public NodeLink? Link { get; init; } = null;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public NodeLink? Link { get; set; } = null;
 }
 
 public class OutputPort
 {
     public string Name { get; set; } = null!;
 
-    [JsonIgnore]
-    public NodeLink? Link { get; init; } = null;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public NodeLink? Link { get; set; } = null;
 
-    [JsonIgnore]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? Data { get; set; } = null;
 }
 
