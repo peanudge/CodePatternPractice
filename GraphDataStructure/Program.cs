@@ -1,21 +1,54 @@
-﻿using System.Text.Json;
+﻿
+
+using System.Text.Json;
 using GraphDataStructure;
 
-var graph = new ActionGraph();
-var node1 = new ActionGraphNode { Id = Guid.NewGuid(), Name = "Node 1" };
-var node2 = new ActionGraphNode { Id = Guid.NewGuid(), Name = "Node 2" };
-var node3 = new ActionGraphNode { Id = Guid.NewGuid(), Name = "Node 3" };
-
-graph.AddNode(node1);
-graph.AddNode(node2);
-graph.AddNode(node3);
-
-graph.Link(node1.Id, node2.Id);
-graph.Link(node2.Id, node3.Id);
+var nodeA = new Node
+{
+    Id = Guid.NewGuid(),
+    Name = "NodeA",
+};
+nodeA.AddOutputPort(new OutputPort { Name = "Output" });
 
 
-var stringifyGraph = JsonSerializer.Serialize(
-    graph,
-    new JsonSerializerOptions { WriteIndented = true });
+var nodeB = new Node
+{
+    Id = Guid.NewGuid(),
+    Name = "NodeB",
+};
+nodeB.AddInputPort(new InputPort { Name = "Input" });
+nodeB.AddOutputPort(new OutputPort { Name = "Output" });
 
-Console.WriteLine(stringifyGraph);
+var nodeC = new Node
+{
+    Id = Guid.NewGuid(),
+    Name = "NodeC",
+};
+nodeC.AddInputPort(new InputPort { Name = "Input" });
+nodeC.AddOutputPort(new OutputPort { Name = "Output" });
+
+var linkAB = new NodeLink
+{
+    SrcNodeId = nodeA.Id,
+    SrcPortName = nodeA.OutputPorts[0].Name,
+    DestNodeId = nodeB.Id,
+    DestPortName = nodeB.InputPorts[0].Name
+};
+
+var linkBC = new NodeLink
+{
+    SrcNodeId = nodeB.Id,
+    SrcPortName = nodeB.OutputPorts[0].Name,
+    DestNodeId = nodeC.Id,
+    DestPortName = nodeC.InputPorts[0].Name
+};
+
+var graph = new NodeGraph(new List<Node> { nodeA, nodeB }, new List<NodeLink> { linkAB, linkBC });
+var encodedGraph = JsonSerializer.Serialize(graph, new JsonSerializerOptions { WriteIndented = true });
+
+Console.WriteLine("Serialized Graph:");
+Console.WriteLine(encodedGraph);
+
+
+// TODO: Deserialized Graph
+
