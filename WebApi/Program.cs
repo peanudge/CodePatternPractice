@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Serilog;
 using Serilog.Events;
 
@@ -20,12 +21,37 @@ try
     builder.Services.AddSerilog();
 
     builder.Services.AddControllers();
+    builder.Services.AddSwaggerGen();
 
     var app = builder.Build();
 
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+
     // Configure the HTTP request pipeline log
     app.UseSerilogRequestLogging();
-    app.MapGet("/", () => "Hello World!");
+
+    app.UseRouting();
+
+    app.MapControllers();
+
+#pragma warning disable ASP0014 // Suggest using top level route registrations
+    _ = app.UseEndpoints(_ => { });
+#pragma warning restore ASP0014 // Suggest using top level route registrations
+
+    app.UseSpa(spa =>
+    {
+        spa.Options.SourcePath = "../spa";
+        if (app.Environment.IsDevelopment())
+        {
+            spa.UseReactDevelopmentServer("start");
+        }
+    });
+
     app.Run();
 
 }

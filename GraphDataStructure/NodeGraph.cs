@@ -12,10 +12,10 @@ public class NodeGraph
     public List<Node> Nodes { get; set; } = new();
     public List<NodeLink> Links { get; set; } = new();
 
-    public NodeGraph(IList<Node> nodes, IList<NodeLink> edges)
+    public NodeGraph(IList<Node> nodes, IList<NodeLink> links)
     {
         Nodes.AddRange(nodes);
-        Links.AddRange(edges);
+        Links.AddRange(links);
     }
 
     public void Build()
@@ -83,9 +83,6 @@ public class OutputPort
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public NodeLink? Link { get; set; } = null;
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public object? Data { get; set; } = null;
 }
 
 public class NodeLink

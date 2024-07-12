@@ -1,6 +1,6 @@
 import "./App.css";
 import ReactFlow, { useNodesState, useEdgesState, addEdge } from "reactflow";
-import React, { useCallback, SyntheticEvent } from "react";
+import React, { useCallback, SyntheticEvent, useEffect } from "react";
 import "reactflow/dist/style.css";
 
 const initialNodes = [
@@ -25,8 +25,26 @@ export default function App() {
     console.log(e.target);
   };
 
+  useEffect(() => {
+    let timer = null;
+
+    timer = setInterval(() => {
+      fetch("/api/graph")
+        .then((res) => res.json())
+        .then((data) => console.log(data))
+        .catch((err) => {
+          console.error(err);
+        });
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
+      <p></p>
       <ReactFlow
         nodes={nodes}
         edges={edges}
