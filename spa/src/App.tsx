@@ -1,16 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ReactFlow, {
   addEdge,
-  applyEdgeChanges,
-  applyNodeChanges,
   Background,
   BackgroundVariant,
   Connection,
   Controls,
   MiniMap,
-  NodeChange,
-  OnEdgesChange,
-  OnNodesChange,
   useEdgesState,
   useNodesState,
 } from "reactflow";
@@ -38,41 +33,41 @@ type NodeGraph = {
   links: NodeLink[];
 };
 
+function createReactFlowNode(data: Node, idx: number) {
+  return {
+    id: data.id,
+    position: {
+      x: idx * 200,
+      y: 0,
+    },
+    data: { label: data.name },
+  };
+}
+
+function createReactFlowEdge(data: NodeLink) {
+  return {
+    id: data.srcNodeId + "-" + data.destNodeId,
+    source: data.srcNodeId,
+    target: data.destNodeId,
+    animated: true,
+    label: "action",
+    type: "step",
+  };
+}
+
 export default function App() {
   const [graph, setGraph] = useState<NodeGraph | undefined>(undefined);
 
-  const [nodes, setNodes] = useNodesState([]);
-  const [edges, setEdges] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   useEffect(() => {
     fetch("/api/graph")
       .then((res) => res.json())
       .then((data: NodeGraph) => {
         setGraph(data);
-
-        const nodes = data.nodes.map((node, idx) => {
-          return {
-            id: node.id,
-            position: {
-              x: idx * 200,
-              y: 0,
-            },
-            data: { label: node.name },
-          };
-        });
-        setNodes(nodes);
-
-        const edges = data.links.map((link) => {
-          return {
-            id: link.srcNodeId + "-" + link.destNodeId,
-            source: link.srcNodeId,
-            target: link.destNodeId,
-            animated: true,
-            label: "action",
-            type: "step",
-          };
-        });
-        setEdges(edges);
+        setNodes(data.nodes.map(createReactFlowNode));
+        setEdges(data.links.map(createReactFlowEdge));
       })
       .catch((err) => {
         console.error(err);
@@ -81,22 +76,6 @@ export default function App() {
 
   const onConnect = (params: Connection) =>
     setEdges((eds) => addEdge(params, eds));
-
-  const onNodeChange: OnNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      if (changes.length > 0 && changes[0].type === "position") {
-        console.log("Node Change: ", changes[0].position);
-      }
-      setNodes((nds) => applyNodeChanges(changes, nds));
-    },
-    [setNodes]
-  );
-  const onEdgesChanges: OnEdgesChange = useCallback(
-    (changes) => {
-      setEdges((eds) => applyEdgeChanges(changes, eds));
-    },
-    [setEdges]
-  );
 
   return (
     <div className="App">
@@ -112,23 +91,14 @@ export default function App() {
           onClick={(e) => {
             console.log(e.target);
           }}
-          onNodesChange={onNodeChange}
-          onEdgesChange={onEdgesChanges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           fitView
           panOnScroll={true}
         >
           <Background color="#654d4d" variant={BackgroundVariant.Dots} />
-          <MiniMap
-            nodeColor={(node) => {
-              switch (node.type) {
-                case "normal":
-                  return "red";
-              }
-              return "black";
-            }}
-            nodeStrokeWidth={3}
-          />
+          <MiniMap nodeColor={() => "red"} nodeStrokeWidth={3} />
           <Controls showZoom showFitView />
         </ReactFlow>
       </div>
