@@ -44,6 +44,7 @@ public class NodeGraph
 public class Node
 {
     public Guid Id { get; set; }
+    public string Type { get; set; } = "normal";
     public string Name { get; set; } = default!;
     public List<InputPort> InputPorts { get; set; } = new();
     public List<OutputPort> OutputPorts { get; set; } = new();
