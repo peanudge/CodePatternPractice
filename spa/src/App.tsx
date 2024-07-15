@@ -11,17 +11,18 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import "./App.css";
+import { ACTION_NODE_TYPE, ActionNode } from "./custom-nodes/ActionNode";
 
-type NodePort = {
+type GraphNodePort = {
   name: string;
 };
-type Node = {
+export type GraphNode = {
   id: string;
   name: string;
-  inputPorts: NodePort[];
-  outputPorts: NodePort[];
+  inputPorts: GraphNodePort[];
+  outputPorts: GraphNodePort[];
 };
-type NodeLink = {
+type GraphNodeLink = {
   srcNodeId: string;
   srcPortName: string;
   destNodeId: string;
@@ -29,31 +30,34 @@ type NodeLink = {
 };
 
 type NodeGraph = {
-  nodes: Node[];
-  links: NodeLink[];
+  nodes: GraphNode[];
+  links: GraphNodeLink[];
 };
 
-function createReactFlowNode(data: Node, idx: number) {
+function createReactFlowNode(data: GraphNode, idx: number) {
   return {
     id: data.id,
     position: {
       x: idx * 200,
       y: 0,
     },
-    data: { label: data.name },
+    type: ACTION_NODE_TYPE,
+    data,
   };
 }
 
-function createReactFlowEdge(data: NodeLink) {
+function createReactFlowEdge(data: GraphNodeLink) {
   return {
     id: data.srcNodeId + "-" + data.destNodeId,
     source: data.srcNodeId,
     target: data.destNodeId,
+    sourceHandle: data.srcPortName,
+    targetHandle: data.destPortName,
     animated: true,
-    label: "action",
     type: "step",
   };
 }
+const nodeTypes = { [ACTION_NODE_TYPE]: ActionNode };
 
 export default function App() {
   const [graph, setGraph] = useState<NodeGraph | undefined>(undefined);
@@ -75,7 +79,9 @@ export default function App() {
   }, [setEdges, setNodes]);
 
   const onConnect = (params: Connection) =>
-    setEdges((eds) => addEdge(params, eds));
+    setEdges((eds) => {
+      return addEdge(params, eds);
+    });
 
   return (
     <div className="App">
@@ -86,11 +92,10 @@ export default function App() {
         }}
       >
         <ReactFlow
+          nodeTypes={nodeTypes}
           nodes={nodes}
           edges={edges}
-          onClick={(e) => {
-            console.log(e.target);
-          }}
+          onClick={(e) => {}}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
