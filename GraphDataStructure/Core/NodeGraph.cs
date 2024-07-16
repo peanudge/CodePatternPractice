@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace GraphDataStructure;
 
 // Factory NodeGraph
@@ -18,33 +16,22 @@ public class NodeGraph
         Links.AddRange(links);
     }
 
-    public void Build()
+    public List<NodeLink> FindConnectedLinksBySrcPort(Guid srcNodeId, string srcPortName)
     {
-        var nodeDict = Nodes.ToDictionary(node => node.Id);
+        return Links.Where(link => link.SrcNodeId == srcNodeId && link.SrcPortName == srcPortName)
+            .ToList();
+    }
 
-        // Link Node's Ports with Edges
-        foreach (var link in Links)
-        {
-            var targetOutputPort = nodeDict[link.SrcNodeId].OutputPorts
-                .Where(port => port.Name == link.SrcPortName)
-                .FirstOrDefault();
-
-            if (targetOutputPort is not null) { targetOutputPort.Link = link; }
-
-
-            var targetInputPort = nodeDict[link.DestNodeId].InputPorts
-                .Where(port => port.Name == link.DestPortName)
-                .FirstOrDefault();
-
-            if (targetInputPort is not null) targetInputPort.Link = link;
-        }
+    public List<NodeLink> FindConnectedLinksByDestPort(Guid destNodeId, string destPortName)
+    {
+        return Links.Where(link => link.DestNodeId == destNodeId && link.DestPortName == destPortName)
+            .ToList();
     }
 }
 
 public class Node
 {
     public Guid Id { get; set; }
-    public string Type { get; set; } = "normal";
     public string Name { get; set; } = default!;
     public List<InputPort> InputPorts { get; set; } = new();
     public List<OutputPort> OutputPorts { get; set; } = new();
@@ -73,17 +60,11 @@ public class Node
 public class InputPort
 {
     public string Name { get; set; } = null!;
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public NodeLink? Link { get; set; } = null;
 }
 
 public class OutputPort
 {
     public string Name { get; set; } = null!;
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public NodeLink? Link { get; set; } = null;
 }
 
 public class NodeLink
@@ -95,6 +76,5 @@ public class NodeLink
 }
 
 
-// TODO: Design Encoding for graph
 // TODO: Persistence DB -> Object instance: Serialization or Factory
 // TODO: Object instance -> JSON or XML: Serialization

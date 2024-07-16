@@ -8,16 +8,14 @@ namespace WebApi;
 public class GraphController : ControllerBase
 {
     [HttpGet]
-    public IActionResult Get()
+    public IActionResult GetSimpleGraph()
     {
-
         var nodeA = new Node
         {
             Id = Guid.NewGuid(),
             Name = "NodeA",
         };
         nodeA.AddOutputPort(new OutputPort { Name = "Output" });
-
 
         var nodeB = new Node
         {
@@ -55,12 +53,6 @@ public class GraphController : ControllerBase
             new List<Node> { nodeA, nodeB, nodeC },
             new List<NodeLink> { linkAB, linkBC }
         );
-
-        // var encodedGraph = JsonSerializer.Serialize(graph, new JsonSerializerOptions
-        // {
-        //     WriteIndented = true,
-        //     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        // });
 
         return Ok(graph);
     }
