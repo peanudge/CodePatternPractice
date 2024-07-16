@@ -9,12 +9,9 @@ public record NextNodeStartRequset(Guid NodeId);
 public sealed class NodeGraphProcessor
 {
     private readonly NodeGraph _graph;
-
-    // TODO: Check if Data Sctructure is appropriate
     private readonly ConcurrentDictionary<Guid, Dictionary<string, NodeOperationResult?>> _outputPortResults = new();
-    private readonly IDictionary<Guid, Task> _runningNodeOperations = new Dictionary<Guid, Task>();
     private readonly ConcurrentQueue<Guid> _completedNodeQueue = new();
-
+    private readonly IDictionary<Guid, Task> _runningNodeOperations = new Dictionary<Guid, Task>();
     private readonly Queue<NextNodeStartRequset> _nextNodeQueue = new();
 
     private bool _isRunning = false;
@@ -135,7 +132,7 @@ public sealed class NodeGraphProcessor
 
                     Console.WriteLine($"Start: {currentNode.Name}");
                     // TODO: Node Operation Logic.
-                    await Task.Delay(100);
+                    await Task.Delay(1000);
                     Console.WriteLine($"End: {currentNode.Name}");
 
                     // Fill the output results for next of next node
