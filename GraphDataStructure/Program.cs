@@ -51,7 +51,7 @@ var nodeGraphProcessor = new NodeGraphProcessor(graph);
 
 try
 {
-    await nodeGraphProcessor.StartAsync();
+    nodeGraphProcessor.StartAsync();
 }
 catch (Exception ex)
 {

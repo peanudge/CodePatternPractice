@@ -1,6 +1,5 @@
-using System.Collections;
 using System.Collections.Concurrent;
-using System.Diagnostics;
+using Microsoft.IdentityModel.Tokens;
 
 namespace GraphDataStructure;
 
@@ -14,8 +13,9 @@ public sealed class NodeGraphProcessor
     // TODO: Check if Data Sctructure is appropriate
     private readonly ConcurrentDictionary<Guid, Dictionary<string, NodeOperationResult?>> _outputPortResults = new();
     private readonly IDictionary<Guid, Task> _runningNodeOperations = new Dictionary<Guid, Task>();
-    // private readonly Queue<Guid> _completedNodeOperations = new();
-    private readonly ConcurrentQueue<NextNodeStartRequset> _nextNodeQueue = new();
+    private readonly ConcurrentQueue<Guid> _completedNodeQueue = new();
+
+    private readonly Queue<NextNodeStartRequset> _nextNodeQueue = new();
 
     private bool _isRunning = false;
     public bool IsRunning => _isRunning;
@@ -45,7 +45,7 @@ public sealed class NodeGraphProcessor
 
     // TODO: Refactoring for readability
     // TODO: Implement Break points between each node
-    public async Task StartAsync(CancellationToken cancellationToken = default)
+    public void StartAsync(CancellationToken cancellationToken = default)
     {
         InitializeOutputResults();
 
@@ -62,37 +62,58 @@ public sealed class NodeGraphProcessor
 
         _nextNodeQueue.Enqueue(new NextNodeStartRequset(startNode.Id));
 
-        while (!cancellationToken.IsCancellationRequested && !(_nextNodeQueue.IsEmpty && _runningNodeOperations.Count == 0))
+        while (!cancellationToken.IsCancellationRequested
+            && !(_nextNodeQueue.IsNullOrEmpty() && _completedNodeQueue.IsEmpty && _runningNodeOperations.Count == 0))
         {
-            Console.WriteLine($"Current:{_runningNodeOperations.Count}, Ready: {_nextNodeQueue.Count}");
-
-            // Batch handling accumulated NextNodeQueue
-            var readyNextNodeIds = new HashSet<Guid>();
-            while (!_nextNodeQueue.IsEmpty)
+            // Ready next node id from completed nodes
+            while (!_completedNodeQueue.IsEmpty)
             {
-                var success = _nextNodeQueue.TryDequeue(out var nextNodeRequest);
-                Debug.Assert(success);
-                readyNextNodeIds.Add(nextNodeRequest!.NodeId);
+                _completedNodeQueue.TryDequeue(out var completedNodeId);
+
+                // Remove completed node id in _runningNodeOperations
+                _ = _runningNodeOperations.Remove(completedNodeId, out _);
+
+                // Create NextNodeStartRequest from CompletedNode.
+                var completedNode = _graph.Nodes.FirstOrDefault(node => node.Id == completedNodeId);
+                if (completedNode is null)
+                {
+                    throw new Exception("Completed Node is not found.");
+                }
+
+                foreach (var outputPort in completedNode.OutputPorts)
+                {
+                    var links = _graph.FindConnectedLinksBySrcPort(completedNode.Id, outputPort.Name);
+                    foreach (var link in links)
+                    {
+                        var nextNodeId = link.DestNodeId;
+                        _nextNodeQueue.Enqueue(new NextNodeStartRequset(nextNodeId));
+                    }
+                }
             }
 
-            // INFO: Consume all readyNextNodeIds
-            foreach (var nextNodeId in readyNextNodeIds)
+            var nextNodeIds = new HashSet<Guid>();
+            while (!_nextNodeQueue.IsNullOrEmpty())
+            {
+                var nextNodeRequest = _nextNodeQueue.Dequeue();
+                nextNodeIds.Add(nextNodeRequest.NodeId);
+            }
+
+            foreach (var nextNodeId in nextNodeIds)
             {
                 var nextNode = _graph.Nodes.FirstOrDefault(node => node.Id == nextNodeId);
-                Debug.Assert(nextNode != null);
 
                 // Check if all input ports are filled by previous node
                 bool isReadyToStartNextNode = true;
-                foreach (var inputPort in nextNode.InputPorts)
+
+                foreach (var inputPort in nextNode!.InputPorts)
                 {
                     var links = _graph.FindConnectedLinksByDestPort(nextNodeId, inputPort.Name);
-                    Debug.Assert(links.Count == 1, "Output Port is connected to only one Input Port");
+
                     var link = links.First();
                     var prevNodeId = link.SrcNodeId;
                     var prevNodeOutputPortName = link.SrcPortName;
 
-                    var gotOutputPortResult = _outputPortResults.TryGetValue(prevNodeId, out var outputPortResults);
-                    Debug.Assert(gotOutputPortResult);
+                    _outputPortResults.TryGetValue(prevNodeId, out var outputPortResults);
 
                     var matchedOutputPortResult = outputPortResults!.GetValueOrDefault(prevNodeOutputPortName);
                     if (matchedOutputPortResult is null)
@@ -112,46 +133,29 @@ public sealed class NodeGraphProcessor
                 {
                     var currentNode = nextNode;
 
-                    // Console.WriteLine($"Start: {currentNode.Name}");
+                    Console.WriteLine($"Start: {currentNode.Name}");
                     // TODO: Node Operation Logic.
                     await Task.Delay(100);
-                    // Console.WriteLine($"End: {currentNode.Name}");
+                    Console.WriteLine($"End: {currentNode.Name}");
 
                     // Fill the output results for next of next node
                     foreach (var outputPort in currentNode.OutputPorts)
                     {
-                        var gotOutputPortResult = _outputPortResults.TryGetValue(currentNode.Id, out var outputPortResults);
-                        Debug.Assert(gotOutputPortResult);
-
-                        // Fulfill the output results
+                        _outputPortResults.TryGetValue(currentNode.Id, out var outputPortResults);
                         outputPortResults![outputPort.Name] = new NodeOperationResult(IsSuccess: true);
-
-                        // Find the next node
-                        var links = _graph.FindConnectedLinksBySrcPort(currentNode.Id, outputPort.Name);
-
-                        foreach (var link in links)
-                        {
-                            var nextNodeId = link.DestNodeId;
-                            // INFO: Request to start the next node of this node
-                            _nextNodeQueue.Enqueue(new NextNodeStartRequset(nextNodeId));
-                        }
                     }
 
-                    // INFO: remove self from runningNodeOperations for fast reponsiveness
-                    _ = _runningNodeOperations.Remove(nextNodeId, out _);
+                    _completedNodeQueue.Enqueue(currentNode.Id);
+
                 }, cancellationToken);
 
                 _runningNodeOperations.TryAdd(nextNodeId, nextNodeOperationTask);
             }
 
             // INFO: Interval to move next node, Prevent excessive CPU tick
-            await Task.Delay(100, cancellationToken);
-
-            // TODO: Implement break points.
+            Thread.Sleep(100);
         }
 
-        Debug.Assert(_nextNodeQueue.Count == 0, "Next Node Queue is not empty");
-        Debug.Assert(_runningNodeOperations.Count == 0, "Running Node Queue is not empty");
         _isRunning = false;
     }
 }
