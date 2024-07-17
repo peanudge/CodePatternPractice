@@ -156,9 +156,41 @@ export default function App() {
     };
   }, [highlightRunningNode]);
 
-  const onConnect = (params: Connection) =>
+  const onConnect = (newConnection: Connection) =>
     setEdges((eds) => {
-      return addEdge(params, eds);
+      // target == input
+      // source == output
+      const linksConnectedInputPort = eds.filter(
+        (ed) =>
+          ed.target === newConnection.target &&
+          ed.targetHandle === newConnection.targetHandle
+      );
+
+      if (linksConnectedInputPort.length !== 0) {
+        alert("Target Input Port Already Connected");
+        return eds;
+      }
+
+      const duplicated = linksConnectedInputPort.some(
+        (ed) =>
+          ed.source === newConnection.source &&
+          ed.sourceHandle === newConnection.sourceHandle
+      );
+
+      if (duplicated) {
+        alert("This is duplicated Connection");
+        return eds;
+      }
+
+      const newEdge = {
+        source: newConnection.source,
+        target: newConnection.target,
+        sourceHandle: newConnection.sourceHandle,
+        targetHandle: newConnection.targetHandle,
+        animated: true,
+        type: "step",
+      };
+      return addEdge(newEdge, eds);
     });
 
   return (

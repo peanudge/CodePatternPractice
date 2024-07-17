@@ -37,6 +37,51 @@
           "name": "Output"
         }
       ]
+    },
+    {
+      "id": "1e9552dc-8114-404e-83eb-f645f44f7021",
+      "name": "NodeD-1",
+      "inputPorts": [
+        {
+          "name": "Input"
+        }
+      ],
+      "outputPorts": [
+        {
+          "name": "Output"
+        }
+      ]
+    },
+    {
+      "id": "333552dc-8114-404e-83eb-f645f44f7021",
+      "name": "NodeD-2",
+      "inputPorts": [
+        {
+          "name": "Input"
+        }
+      ],
+      "outputPorts": [
+        {
+          "name": "Output"
+        }
+      ]
+    },
+    {
+      "id": "aa9552dc-8114-404e-83eb-f645f44f7021",
+      "name": "NodeE",
+      "inputPorts": [
+        {
+          "name": "Input1"
+        },
+        {
+          "name": "Input2"
+        }
+      ],
+      "outputPorts": [
+        {
+          "name": "Output"
+        }
+      ]
     }
   ],
   "links": [
@@ -51,6 +96,30 @@
       "srcPortName": "Output",
       "destNodeId": "2e9552dc-8114-404e-83eb-f645f44f7021",
       "destPortName": "Input"
+    },
+    {
+      "srcNodeId": "da723ae6-8bc9-446a-9f75-207034b18201",
+      "srcPortName": "Output",
+      "destNodeId": "333552dc-8114-404e-83eb-f645f44f7021",
+      "destPortName": "Input"
+    },
+    {
+      "srcNodeId": "333552dc-8114-404e-83eb-f645f44f7021",
+      "srcPortName": "Output",
+      "destNodeId": "1e9552dc-8114-404e-83eb-f645f44f7021",
+      "destPortName": "Input"
+    },
+    {
+      "srcNodeId": "2e9552dc-8114-404e-83eb-f645f44f7021",
+      "srcPortName": "Output",
+      "destNodeId": "aa9552dc-8114-404e-83eb-f645f44f7021",
+      "destPortName": "Input1"
+    },
+    {
+      "srcNodeId": "1e9552dc-8114-404e-83eb-f645f44f7021",
+      "srcPortName": "Output",
+      "destNodeId": "aa9552dc-8114-404e-83eb-f645f44f7021",
+      "destPortName": "Input2"
     }
   ]
 }
