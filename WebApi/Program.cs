@@ -4,7 +4,7 @@ using Serilog.Events;
 using WebApi;
 
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
+    .MinimumLevel.Error()
     .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.Extensions", LogEventLevel.Warning)
     .Enrich.FromLogContext()

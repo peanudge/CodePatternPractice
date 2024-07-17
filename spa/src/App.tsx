@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ReactFlow, {
   addEdge,
   Background,
@@ -105,40 +105,56 @@ export default function App() {
       });
   }, [setEdges, setNodes]);
 
+  const highlightRunningNode = useCallback(
+    (runningNodeIds: string[]) => {
+      setNodes((nds) =>
+        nds.map((nd) => {
+          if (runningNodeIds.includes(nd.data.id)) {
+            return {
+              ...nd,
+              style: { background: "#00e676", borderRadius: "100%" },
+            };
+          } else {
+            return {
+              ...nd,
+              style: { background: "white", borderRadius: "100%" },
+            };
+          }
+        })
+      );
+    },
+    [setNodes]
+  );
+
   useEffect(() => {
     let intervalTimerId = setInterval(async () => {
       const res = await fetch("/api/graph/process", {
         method: "GET",
       });
-      if (res.ok) {
-        const data = (await res.json()) as GraphProcesssingInfo;
-        setGraphProcessingInfo(data);
 
-        const runningNodeIds = data.currentRunningNodeIds;
-        // Update Current Running Node
-        setNodes((nds) =>
-          nds.map((nd) => {
-            if (runningNodeIds.includes(nd.data.id)) {
-              return {
-                ...nd,
-                style: { background: "#00e676", borderRadius: "100%" },
-              };
-            } else {
-              return {
-                ...nd,
-                style: { background: "white", borderRadius: "100%" },
-              };
-            }
-          })
-        );
-      } else {
-        setGraphProcessingInfo(undefined);
+      if (!res.ok) {
+        return;
       }
+
+      const data = (await res.json()) as {
+        graphProcessor: GraphProcesssingInfo;
+      };
+
+      if (data.graphProcessor === null) {
+        setGraphProcessingInfo(undefined);
+        return;
+      }
+
+      setGraphProcessingInfo(data.graphProcessor);
+
+      const runningNodeIds = data.graphProcessor.currentRunningNodeIds ?? [];
+      highlightRunningNode(runningNodeIds);
     }, 500);
+
     return () => {
       clearInterval(intervalTimerId);
     };
-  }, [setNodes]);
+  }, [highlightRunningNode]);
 
   const onConnect = (params: Connection) =>
     setEdges((eds) => {
@@ -170,7 +186,7 @@ export default function App() {
           position: "relative",
         }}
       >
-        <div style={{ height: "800px", boxShadow: "inset 0 0 10px red" }}>
+        <div style={{ height: "800px" }}>
           <textarea
             style={{
               wordBreak: "keep-all",
@@ -250,7 +266,7 @@ export default function App() {
             gap: "20px",
           }}
         >
-          <button onClick={() => startGraphProcessing()}>
+          <button onClick={() => startGraphProcessing(1000, 300)}>
             Start Graph Processing
           </button>
           <span>
@@ -258,7 +274,7 @@ export default function App() {
               ? graphProcessingInfo.isRunning
                 ? "Graph Processing Running..."
                 : "Graph Processing End!"
-              : ""}
+              : "Not Started"}
           </span>
         </div>
       </div>
@@ -266,10 +282,16 @@ export default function App() {
   );
 }
 
-export const startGraphProcessing = async () => {
-  const res = await fetch("api/graph/process/start", {
-    method: "PUT",
-  });
+export const startGraphProcessing = async (
+  roundInterval: number,
+  nodeOperationDelay: number
+) => {
+  const res = await fetch(
+    `api/graph/process/start?roundInterval=${roundInterval}&nodeOperationDelay=${nodeOperationDelay}`,
+    {
+      method: "PUT",
+    }
+  );
 
   if (res.ok) {
     return true;

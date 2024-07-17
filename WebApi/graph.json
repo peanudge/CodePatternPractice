@@ -1,7 +1,7 @@
 {
   "nodes": [
     {
-      "id": "c23875a7-f2e5-4df7-bf5b-469b5f9dfa3c",
+      "id": "0e6d5016-fa6f-4ae0-87f4-0511a1660f6d",
       "name": "NodeA",
       "inputPorts": [],
       "outputPorts": [
@@ -11,7 +11,7 @@
       ]
     },
     {
-      "id": "95961482-f592-4b9f-a486-07bcb82a5b62",
+      "id": "da723ae6-8bc9-446a-9f75-207034b18201",
       "name": "NodeB",
       "inputPorts": [
         {
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "id": "82d9293b-f9ab-4532-88b9-62c5c22826e7",
+      "id": "2e9552dc-8114-404e-83eb-f645f44f7021",
       "name": "NodeC",
       "inputPorts": [
         {
@@ -41,15 +41,15 @@
   ],
   "links": [
     {
-      "srcNodeId": "c23875a7-f2e5-4df7-bf5b-469b5f9dfa3c",
+      "srcNodeId": "0e6d5016-fa6f-4ae0-87f4-0511a1660f6d",
       "srcPortName": "Output",
-      "destNodeId": "95961482-f592-4b9f-a486-07bcb82a5b62",
+      "destNodeId": "da723ae6-8bc9-446a-9f75-207034b18201",
       "destPortName": "Input"
     },
     {
-      "srcNodeId": "95961482-f592-4b9f-a486-07bcb82a5b62",
+      "srcNodeId": "da723ae6-8bc9-446a-9f75-207034b18201",
       "srcPortName": "Output",
-      "destNodeId": "82d9293b-f9ab-4532-88b9-62c5c22826e7",
+      "destNodeId": "2e9552dc-8114-404e-83eb-f645f44f7021",
       "destPortName": "Input"
     }
   ]

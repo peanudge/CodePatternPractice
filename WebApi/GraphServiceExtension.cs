@@ -4,8 +4,8 @@ namespace WebApi;
 
 public static class GraphServiceExtension
 {
-    public static void AddGraphService(this IServiceCollection services)
+    public static IServiceCollection AddGraphService(this IServiceCollection services)
     {
-        services.AddSingleton<NodeGraphProcessingService>();
+        return services.AddSingleton<NodeGraphProcessingService>();
     }
 }

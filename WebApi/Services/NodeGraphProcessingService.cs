@@ -5,8 +5,7 @@ namespace WebApi.Services;
 public class NodeGraphProcessingService : IDisposable
 {
     // Only One Graph Processing at a time
-    private NodeGraphProcessor? _currentNodeGraphProcessor = null;
-    public NodeGraphProcessor? CurrentGraphProcessor => _currentNodeGraphProcessor;
+    public NodeGraphProcessor? CurrentGraphProcessor { get; set; }
 
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
@@ -14,19 +13,19 @@ public class NodeGraphProcessingService : IDisposable
     {
     }
 
-    public bool StartGraphProcessing(NodeGraph nodeGraph)
+    public bool StartGraphProcessing(NodeGraph nodeGraph, NodeGraphProcessorOptions? options = null)
     {
-        if (_currentNodeGraphProcessor is not null && !_currentNodeGraphProcessor.IsEnd)
+        if (CurrentGraphProcessor is not null && !CurrentGraphProcessor.IsEnd)
         {
             // Already processing a other graph
             return false;
         }
 
-        _currentNodeGraphProcessor = new NodeGraphProcessor(nodeGraph);
+        CurrentGraphProcessor = new NodeGraphProcessor(nodeGraph, options);
 
         Task.Run(() =>
         {
-            _currentNodeGraphProcessor.Start(CancellationTokenSource.Token);
+            CurrentGraphProcessor.Start(CancellationTokenSource.Token);
         }, CancellationTokenSource.Token);
 
         return true;

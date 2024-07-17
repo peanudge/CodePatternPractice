@@ -7,6 +7,13 @@ public record NodeOperationResult(bool IsSuccess, string? ErrorMessage = null);
 public record NextNodeStartEvent(Guid NodeId);
 public record NodeCompleteEvent(Guid NodeId);
 
+
+public class NodeGraphProcessorOptions
+{
+    public int RoundIntervalMs { get; set; }
+    public int NodeOperationDelayMs { get; set; }
+}
+
 public sealed class NodeGraphProcessor
 {
     private readonly NodeGraph _graph;
@@ -21,10 +28,17 @@ public sealed class NodeGraphProcessor
     public bool IsRunning => _isRunning;
     public bool IsEnd => !_isRunning;
 
-    public NodeGraphProcessor(NodeGraph graph)
+
+    private int RoundInterval { get; set; }
+    private int NodeOperationDelay { get; set; }
+
+    public NodeGraphProcessor(NodeGraph graph, NodeGraphProcessorOptions? options = null)
     {
         _graph = graph;
         InitializeOutputResults();
+
+        RoundInterval = options?.RoundIntervalMs ?? 500;
+        NodeOperationDelay = options?.NodeOperationDelayMs ?? 300;
     }
 
     /// <summary>
@@ -143,7 +157,7 @@ public sealed class NodeGraphProcessor
             }
 
             // INFO: Interval to move next node, Prevent excessive CPU tick
-            Thread.Sleep(500);
+            Thread.Sleep(RoundInterval);
         }
 
         _isRunning = false;
@@ -155,7 +169,7 @@ public sealed class NodeGraphProcessor
     {
         Console.WriteLine($"{node.Name} [Start]");
         // TODO: Node Operation Logic.
-        await Task.Delay(300);
+        await Task.Delay(NodeOperationDelay);
         Console.WriteLine($"{node.Name} [End]");
     }
 

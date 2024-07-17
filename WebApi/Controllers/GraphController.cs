@@ -2,7 +2,6 @@ using System.Net;
 using System.Text.Json;
 using GraphDataStructure;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using WebApi.Services;
 namespace WebApi;
 
@@ -11,6 +10,12 @@ namespace WebApi;
 public class GraphController : ControllerBase
 {
     private readonly string _graphFilePath = Path.Combine(Environment.CurrentDirectory, "graph.json");
+    private NodeGraphProcessingService _nodeGraphProcessingService;
+
+    public GraphController(NodeGraphProcessingService nodeGraphProcessingService)
+    {
+        _nodeGraphProcessingService = nodeGraphProcessingService;
+    }
 
     [HttpGet("example")]
     public IActionResult GetExampleGraph()
@@ -92,7 +97,9 @@ public class GraphController : ControllerBase
     }
 
     [HttpPut("process/start")]
-    public IActionResult StartGraphProcessing([FromServices] NodeGraphProcessingService nodeGraphProcessingService)
+    public IActionResult StartGraphProcessing(
+        [FromQuery] int roundInterval = 300,
+        [FromQuery] int nodeOperationDelay = 500)
     {
         var encodedGraph = System.IO.File.ReadAllText(_graphFilePath);
 
@@ -109,7 +116,11 @@ public class GraphController : ControllerBase
                  statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var isSuccess = nodeGraphProcessingService.StartGraphProcessing(decodedGraph);
+        var isSuccess = _nodeGraphProcessingService.StartGraphProcessing(decodedGraph, new NodeGraphProcessorOptions()
+        {
+            RoundIntervalMs = roundInterval,
+            NodeOperationDelayMs = nodeOperationDelay
+        });
         if (!isSuccess)
         {
             return Problem(
@@ -121,16 +132,13 @@ public class GraphController : ControllerBase
     }
 
     [HttpGet("process")]
-    public IActionResult GetGraphProcessor([FromServices] NodeGraphProcessingService nodeGraphProcessingService)
+    public IActionResult GetGraphProcessorInfo()
     {
-        var currentGraphProcessor = nodeGraphProcessingService.CurrentGraphProcessor;
-        if (currentGraphProcessor is null)
-        {
-            return Problem(
-                detail: "No Graph Processor is running.",
-                statusCode: StatusCodes.Status400BadRequest);
-        }
+        var currentGraphProcessor = _nodeGraphProcessingService.CurrentGraphProcessor;
 
-        return Ok(currentGraphProcessor);
+        return Ok(new
+        {
+            GraphProcessor = currentGraphProcessor
+        });
     }
 }
