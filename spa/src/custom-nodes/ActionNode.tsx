@@ -18,13 +18,16 @@ export function ActionNode(props: NodeProps<GraphNode>) {
       <div
         style={{
           border: "2px solid black",
-          borderRadius: "5px",
-          background: "white",
+          borderRadius: "100%",
+          background: "transparent",
           width: "100px",
           height: "100px",
-          // transform: "rotate(-45deg)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
+        <span>{data.name}</span>
         {inputPorts.map((port, idx) => {
           return (
             <Handle

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Serilog;
 using Serilog.Events;
+using WebApi;
 
-// TODO
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
@@ -20,7 +20,12 @@ try
     // TODO: The builder.Services.AddSerilog() call will redirect all log events through your Serilog pipeline
     builder.Services.AddSerilog();
 
+    builder
+        .Services
+        .AddGraphService();
+
     builder.Services.AddControllers();
+
     builder.Services.AddSwaggerGen();
 
     var app = builder.Build();

@@ -1,0 +1,56 @@
+{
+  "nodes": [
+    {
+      "id": "c23875a7-f2e5-4df7-bf5b-469b5f9dfa3c",
+      "name": "NodeA",
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "name": "Output"
+        }
+      ]
+    },
+    {
+      "id": "95961482-f592-4b9f-a486-07bcb82a5b62",
+      "name": "NodeB",
+      "inputPorts": [
+        {
+          "name": "Input"
+        }
+      ],
+      "outputPorts": [
+        {
+          "name": "Output"
+        }
+      ]
+    },
+    {
+      "id": "82d9293b-f9ab-4532-88b9-62c5c22826e7",
+      "name": "NodeC",
+      "inputPorts": [
+        {
+          "name": "Input"
+        }
+      ],
+      "outputPorts": [
+        {
+          "name": "Output"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "srcNodeId": "c23875a7-f2e5-4df7-bf5b-469b5f9dfa3c",
+      "srcPortName": "Output",
+      "destNodeId": "95961482-f592-4b9f-a486-07bcb82a5b62",
+      "destPortName": "Input"
+    },
+    {
+      "srcNodeId": "95961482-f592-4b9f-a486-07bcb82a5b62",
+      "srcPortName": "Output",
+      "destNodeId": "82d9293b-f9ab-4532-88b9-62c5c22826e7",
+      "destPortName": "Input"
+    }
+  ]
+}

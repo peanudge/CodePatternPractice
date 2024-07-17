@@ -5,7 +5,9 @@ import ReactFlow, {
   BackgroundVariant,
   Connection,
   Controls,
+  Edge,
   MiniMap,
+  Node,
   useEdgesState,
   useNodesState,
 } from "reactflow";
@@ -16,12 +18,14 @@ import { ACTION_NODE_TYPE, ActionNode } from "./custom-nodes/ActionNode";
 type GraphNodePort = {
   name: string;
 };
+
 export type GraphNode = {
   id: string;
   name: string;
   inputPorts: GraphNodePort[];
   outputPorts: GraphNodePort[];
 };
+
 type GraphNodeLink = {
   srcNodeId: string;
   srcPortName: string;
@@ -34,7 +38,13 @@ type NodeGraph = {
   links: GraphNodeLink[];
 };
 
-function createReactFlowNode(data: GraphNode, idx: number) {
+type GraphProcesssingInfo = {
+  currentRunningNodeIds: string[];
+  isRunning: boolean;
+  isEnd: boolean;
+};
+
+function createReactFlowNode(data: GraphNode, idx: number): Node<GraphNode> {
   return {
     id: data.id,
     position: {
@@ -46,7 +56,7 @@ function createReactFlowNode(data: GraphNode, idx: number) {
   };
 }
 
-function createReactFlowEdge(data: GraphNodeLink) {
+function createReactFlowEdge(data: GraphNodeLink): Edge<GraphNodeLink> {
   return {
     id: data.srcNodeId + "-" + data.destNodeId,
     source: data.srcNodeId,
@@ -55,21 +65,38 @@ function createReactFlowEdge(data: GraphNodeLink) {
     targetHandle: data.destPortName,
     animated: true,
     type: "step",
+    data,
   };
 }
+
 const nodeTypes = { [ACTION_NODE_TYPE]: ActionNode };
 
 export default function App() {
   const [graph, setGraph] = useState<NodeGraph | undefined>(undefined);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [graphTextData, setGraphTextData] = useState<string>("");
+  const [error, setError] = useState<string>("");
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<GraphNodeLink>([]);
+
+  const [graphProcessingInfo, setGraphProcessingInfo] = useState<
+    GraphProcesssingInfo | undefined
+  >(undefined);
+
+  const refreshGraphData = (data: NodeGraph) => {
+    setGraph(data);
+    setGraphTextData(JSON.stringify(data, null, 2));
+    setNodes(data.nodes.map(createReactFlowNode));
+    setEdges(data.links.map(createReactFlowEdge));
+  };
 
   useEffect(() => {
     fetch("/api/graph")
       .then((res) => res.json())
       .then((data: NodeGraph) => {
         setGraph(data);
+        setGraphTextData(JSON.stringify(data, null, 2));
         setNodes(data.nodes.map(createReactFlowNode));
         setEdges(data.links.map(createReactFlowEdge));
       })
@@ -78,6 +105,41 @@ export default function App() {
       });
   }, [setEdges, setNodes]);
 
+  useEffect(() => {
+    let intervalTimerId = setInterval(async () => {
+      const res = await fetch("/api/graph/process", {
+        method: "GET",
+      });
+      if (res.ok) {
+        const data = (await res.json()) as GraphProcesssingInfo;
+        setGraphProcessingInfo(data);
+
+        const runningNodeIds = data.currentRunningNodeIds;
+        // Update Current Running Node
+        setNodes((nds) =>
+          nds.map((nd) => {
+            if (runningNodeIds.includes(nd.data.id)) {
+              return {
+                ...nd,
+                style: { background: "#00e676", borderRadius: "100%" },
+              };
+            } else {
+              return {
+                ...nd,
+                style: { background: "white", borderRadius: "100%" },
+              };
+            }
+          })
+        );
+      } else {
+        setGraphProcessingInfo(undefined);
+      }
+    }, 500);
+    return () => {
+      clearInterval(intervalTimerId);
+    };
+  }, [setNodes]);
+
   const onConnect = (params: Connection) =>
     setEdges((eds) => {
       return addEdge(params, eds);
@@ -85,12 +147,7 @@ export default function App() {
 
   return (
     <div className="App">
-      <div
-        style={{
-          height: "100vh",
-          width: "50vw",
-        }}
-      >
+      <div className="AppLeft">
         <ReactFlow
           nodeTypes={nodeTypes}
           nodes={nodes}
@@ -110,20 +167,113 @@ export default function App() {
       <div
         className="AppRight"
         style={{
-          backgroundColor: "#ccc5",
+          position: "relative",
         }}
       >
-        <pre
+        <div style={{ height: "800px", boxShadow: "inset 0 0 10px red" }}>
+          <textarea
+            style={{
+              wordBreak: "keep-all",
+              fontSize: "18px",
+              width: "100%",
+              height: "100%",
+            }}
+            value={graphTextData}
+            onChange={(e) => {
+              setGraphTextData(e.target.value);
+            }}
+          />
+        </div>
+
+        {error && <p style={{ color: "red" }}>{error}</p>}
+        <div
           style={{
-            wordBreak: "keep-all",
-            fontSize: "18px",
-            margin: 0,
-            padding: "14px",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "10px",
+            marginTop: "10px",
           }}
         >
-          {JSON.stringify(graph, null, 2)}
-        </pre>
+          <button
+            onClick={() => {
+              try {
+                const data = JSON.parse(graphTextData);
+                setGraph(data);
+                setNodes(data.nodes.map(createReactFlowNode));
+                setEdges(data.links.map(createReactFlowEdge));
+                setError("");
+              } catch (err) {
+                setError((err as Error).message);
+              }
+            }}
+          >
+            Update Only Graph
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const parsedGraphdata = JSON.parse(graphTextData);
+                const res = await fetch("/api/graph", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(parsedGraphdata),
+                });
+                if (!res.ok) {
+                  throw new Error("Failed to upload graph to server");
+                } else {
+                  const data = (await res.json()) as NodeGraph;
+                  refreshGraphData(data);
+                }
+                setError("");
+              } catch (err) {
+                setError((err as Error).message);
+              }
+            }}
+          >
+            Upload Graph To Server
+          </button>
+          <button
+            onClick={() => {
+              setGraphTextData(JSON.stringify(graph, null, 2));
+            }}
+          >
+            Reset
+          </button>
+          <button>Load Example Code</button>
+        </div>
+        <div
+          style={{
+            marginTop: "20px",
+            display: "flex",
+            gap: "20px",
+          }}
+        >
+          <button onClick={() => startGraphProcessing()}>
+            Start Graph Processing
+          </button>
+          <span>
+            {graphProcessingInfo
+              ? graphProcessingInfo.isRunning
+                ? "Graph Processing Running..."
+                : "Graph Processing End!"
+              : ""}
+          </span>
+        </div>
       </div>
     </div>
   );
 }
+
+export const startGraphProcessing = async () => {
+  const res = await fetch("api/graph/process/start", {
+    method: "PUT",
+  });
+
+  if (res.ok) {
+    return true;
+  } else {
+    return false;
+  }
+};

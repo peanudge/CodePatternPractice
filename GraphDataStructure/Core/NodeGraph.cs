@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace GraphDataStructure;
 
 // Factory NodeGraph
@@ -9,6 +11,11 @@ public class NodeGraph
 {
     public List<Node> Nodes { get; set; } = new();
     public List<NodeLink> Links { get; set; } = new();
+
+    [JsonConstructor]
+    public NodeGraph()
+    {
+    }
 
     public NodeGraph(IList<Node> nodes, IList<NodeLink> links)
     {

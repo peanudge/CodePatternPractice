@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
+﻿using System.Text.Json;
 using GraphDataStructure;
 
 var nodeA = new Node
@@ -51,22 +50,37 @@ var nodeGraphProcessor = new NodeGraphProcessor(graph);
 
 try
 {
-    nodeGraphProcessor.StartAsync();
+    nodeGraphProcessor.Start();
 }
 catch (Exception ex)
 {
     Console.WriteLine(ex.Message);
 }
 
-// var encodedGraph = JsonSerializer.Serialize(graph, new JsonSerializerOptions
-// {
-//     WriteIndented = true,
-//     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-// });
 
-// Console.WriteLine("Serialized Graph:");
-// Console.WriteLine(encodedGraph);
+var jsonSerializerOptions = new JsonSerializerOptions
+{
+    WriteIndented = true,
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    IncludeFields = false,
+};
 
+var encodedGraph = JsonSerializer.Serialize(graph, jsonSerializerOptions);
+
+var graphFilePath = Path.Combine(Environment.CurrentDirectory, "graph.json");
+
+File.WriteAllText(graphFilePath, encodedGraph);
+
+
+var text = File.ReadAllText(graphFilePath);
+
+var decodedGraph = JsonSerializer.Deserialize<NodeGraph>(text, jsonSerializerOptions);
+if (decodedGraph is null)
+{
+    Console.WriteLine("Failed to Deserialize Graph");
+    return;
+}
+Console.WriteLine($"Save Graph {decodedGraph.Nodes.Count} Nodes, {decodedGraph.Links.Count} Links");
 
 // TODO: Deserialized Graph & Build Linking NodePorts and NodeLinks
 
