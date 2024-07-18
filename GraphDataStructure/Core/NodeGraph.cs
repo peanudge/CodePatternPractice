@@ -34,6 +34,14 @@ public class NodeGraph
         return Links.Where(link => link.DestNodeId == destNodeId && link.DestPortName == destPortName)
             .ToList();
     }
+
+    public NodeGraph Merge(NodeGraph nodeGraph)
+    {
+        return new NodeGraph(
+            Nodes.Concat(nodeGraph.Nodes).ToList(),
+            Links.Concat(nodeGraph.Links).ToList()
+        );
+    }
 }
 
 public class Node
@@ -67,6 +75,8 @@ public class Node
 public class InputPort
 {
     public string Name { get; set; } = null!;
+
+    public bool IsParameter { get; set; } = false;
 }
 
 public class OutputPort

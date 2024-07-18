@@ -1,7 +1,7 @@
 {
   "nodes": [
     {
-      "id": "0e6d5016-fa6f-4ae0-87f4-0511a1660f6d",
+      "id": "910900d1-701b-4bc6-9c4a-f8947dbb51e3",
       "name": "NodeA",
       "inputPorts": [],
       "outputPorts": [
@@ -11,11 +11,12 @@
       ]
     },
     {
-      "id": "da723ae6-8bc9-446a-9f75-207034b18201",
+      "id": "68f299de-53f9-4222-9de7-1f2a2201f556",
       "name": "NodeB",
       "inputPorts": [
         {
-          "name": "Input"
+          "name": "Input",
+          "isParameter": false
         }
       ],
       "outputPorts": [
@@ -25,32 +26,69 @@
       ]
     },
     {
-      "id": "2e9552dc-8114-404e-83eb-f645f44f7021",
+      "id": "027fcd71-d210-4b4e-973b-babb1228170b",
       "name": "NodeC",
       "inputPorts": [
         {
-          "name": "Input"
+          "name": "Input",
+          "isParameter": false
         }
       ],
       "outputPorts": [
         {
           "name": "Output"
+        }
+      ]
+    },
+    {
+      "id": "37ec6d23-6401-40ba-8bea-db1bc209a8cc",
+      "name": "RelayNode1",
+      "inputPorts": [
+        {
+          "name": "Start",
+          "isParameter": true
+        }
+      ],
+      "outputPorts": [
+        {
+          "name": "End"
+        }
+      ]
+    },
+    {
+      "id": "811e2f8a-306e-4ae5-9b24-df9de529ded8",
+      "name": "RelayNode2",
+      "inputPorts": [
+        {
+          "name": "Start",
+          "isParameter": false
+        }
+      ],
+      "outputPorts": [
+        {
+          "name": "End"
         }
       ]
     }
   ],
   "links": [
     {
-      "srcNodeId": "0e6d5016-fa6f-4ae0-87f4-0511a1660f6d",
+      "srcNodeId": "910900d1-701b-4bc6-9c4a-f8947dbb51e3",
       "srcPortName": "Output",
-      "destNodeId": "da723ae6-8bc9-446a-9f75-207034b18201",
+      "destNodeId": "68f299de-53f9-4222-9de7-1f2a2201f556",
       "destPortName": "Input"
     },
     {
-      "srcNodeId": "da723ae6-8bc9-446a-9f75-207034b18201",
+      "srcNodeId": "68f299de-53f9-4222-9de7-1f2a2201f556",
       "srcPortName": "Output",
-      "destNodeId": "2e9552dc-8114-404e-83eb-f645f44f7021",
+      "destNodeId": "027fcd71-d210-4b4e-973b-babb1228170b",
       "destPortName": "Input"
+    },
+    {
+      "srcNodeId": "37ec6d23-6401-40ba-8bea-db1bc209a8cc",
+      "srcPortName": "End",
+      "destNodeId": "811e2f8a-306e-4ae5-9b24-df9de529ded8",
+      "destPortName": "Start"
     }
   ]
 }

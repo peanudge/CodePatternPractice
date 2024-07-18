@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GraphDataStructure;
@@ -65,15 +66,21 @@ public sealed class NodeGraphProcessor
         _isRunning = true;
 
         // Find & Start the first node.
-        var startNode = _graph.Nodes.FirstOrDefault(n => n.InputPorts.Count == 0);
-        if (startNode == null)
+        var startNodes = _graph.Nodes
+           .Where(n => n.InputPorts.Where(p => p.IsParameter == false).Count() == 0)
+           .ToList();
+
+        if (startNodes.Count == 0)
         {
             Console.WriteLine("Start Node is not found.");
             _isRunning = false;
             return;
         }
 
-        _nextNodeStartEventQueue.Enqueue(new NextNodeStartEvent(startNode.Id));
+        startNodes.ForEach(startNode =>
+        {
+            _nextNodeStartEventQueue.Enqueue(new NextNodeStartEvent(startNode.Id));
+        });
 
         while (!cancellationToken.IsCancellationRequested
             && !(_nextNodeStartEventQueue.IsNullOrEmpty() && _currentRunningNodes.Count == 0))
@@ -106,6 +113,8 @@ public sealed class NodeGraphProcessor
                 var nextNodeStartEvent = _nextNodeStartEventQueue.Dequeue();
                 nextNodeIds.Add(nextNodeStartEvent.NodeId);
             }
+
+            // TODO: Show Waiting Node to User for better understanding situation
 
             foreach (var nextNodeId in nextNodeIds)
             {
@@ -180,6 +189,11 @@ public sealed class NodeGraphProcessor
         // Check if all input ports are filled by previous node
         foreach (var inputPort in node!.InputPorts)
         {
+            if (inputPort.IsParameter)
+            {
+                continue;
+            }
+
             var connectedLinks = _graph.FindConnectedLinksByDestPort(node.Id, inputPort.Name);
             var link = connectedLinks.FirstOrDefault();
             if (link is null)

@@ -41,12 +41,33 @@ var linkBC = new NodeLink
     DestPortName = nodeC.InputPorts[0].Name
 };
 
-var graph = new NodeGraph(
+var graph1 = new NodeGraph(
     new List<Node> { nodeA, nodeB, nodeC },
     new List<NodeLink> { linkAB, linkBC }
 );
 
-var nodeGraphProcessor = new NodeGraphProcessor(graph);
+// Merge Graph
+var relayNode1 = new RelayNode("RelayNode1");
+relayNode1.StartPort.IsParameter = true;
+
+var relayNode2 = new RelayNode("RelayNode2");
+
+var relayNodelink = new NodeLink()
+{
+    SrcNodeId = relayNode1.Id,
+    SrcPortName = relayNode1.EndPort.Name,
+    DestNodeId = relayNode2.Id,
+    DestPortName = relayNode2.StartPort.Name
+};
+
+var graph2 = new NodeGraph(
+    new List<Node> { relayNode1, relayNode2 },
+    new List<NodeLink> { relayNodelink }
+);
+
+var mergedGraph = graph1.Merge(graph2);
+
+var nodeGraphProcessor = new NodeGraphProcessor(mergedGraph);
 
 try
 {
@@ -65,7 +86,7 @@ var jsonSerializerOptions = new JsonSerializerOptions
     IncludeFields = false,
 };
 
-var encodedGraph = JsonSerializer.Serialize(graph, jsonSerializerOptions);
+var encodedGraph = JsonSerializer.Serialize(mergedGraph, jsonSerializerOptions);
 
 var graphFilePath = Path.Combine(Environment.CurrentDirectory, "graph.json");
 
