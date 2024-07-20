@@ -28,29 +28,43 @@ export function ActionNode(props: NodeProps<GraphNode>) {
         }}
       >
         <span>{data.name}</span>
-        {inputPorts.map((port, idx) => {
-          return (
-            <Handle
-              key={port.name}
-              id={port.name}
-              type="target"
-              position={Position.Left}
-              style={{ ...portStyle, top: "50%" }}
-            />
-          );
-        })}
 
-        {outputPorts.map((port, idx) => {
-          return (
-            <Handle
-              key={port.name}
-              id={port.name}
-              type="source"
-              position={Position.Right}
-              style={{ ...portStyle, top: "50%" }}
-            />
-          );
-        })}
+        <div
+          style={{
+            position: "absolute",
+            left: "-10px",
+          }}
+        >
+          {inputPorts.map((port, idx) => {
+            return (
+              <Handle
+                key={port.name}
+                id={port.name}
+                type="target"
+                position={Position.Left}
+                style={{ ...portStyle, position: "relative" }}
+              />
+            );
+          })}
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            right: "-10px",
+          }}
+        >
+          {outputPorts.map((port, idx) => {
+            return (
+              <Handle
+                key={port.name}
+                id={port.name}
+                type="source"
+                position={Position.Right}
+                style={{ ...portStyle, position: "relative" }}
+              />
+            );
+          })}
+        </div>
       </div>
     </>
   );

@@ -6,6 +6,7 @@ import ReactFlow, {
   Connection,
   Controls,
   Edge,
+  MarkerType,
   MiniMap,
   Node,
   useEdgesState,
@@ -65,6 +66,7 @@ function createReactFlowEdge(data: GraphNodeLink): Edge<GraphNodeLink> {
     targetHandle: data.destPortName,
     animated: true,
     type: "step",
+    markerEnd: { type: MarkerType.Arrow },
     data,
   };
 }

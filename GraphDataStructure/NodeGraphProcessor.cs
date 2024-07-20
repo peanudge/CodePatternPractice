@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GraphDataStructure;
@@ -72,7 +71,6 @@ public sealed class NodeGraphProcessor
 
         if (startNodes.Count == 0)
         {
-            Console.WriteLine("Start Node is not found.");
             _isRunning = false;
             return;
         }
@@ -130,8 +128,9 @@ public sealed class NodeGraphProcessor
                     continue;
                 }
 
+                Console.WriteLine($"Start Node: {nextNode.Name}");
                 // INFO: If the node is ready to start, Consume Previsous NodeOperationResult.
-                ConsumeInputsFor(nextNode);
+                ConsumeIncomingDataOf(nextNode);
 
                 // Start the next node
                 var nodeOperationTask = Task.Run(async () =>
@@ -157,7 +156,7 @@ public sealed class NodeGraphProcessor
                             _outputPortResults.TryGetValue(currentNode.Id, out var outputPortResult);
 
                             // TODO: IF Node is Primitive, Arithmetic, Logical Node,
-                            // You should implement Different output port filling logic.
+                            // You should implement different output port filling logic.
                             outputPortResult![outputPort.Name] = new NodeOperationResult(IsSuccess: isSuccess, errorMessage);
                         }
 
@@ -190,10 +189,10 @@ public sealed class NodeGraphProcessor
     {
         // Check if all input ports are filled by previous node
         return node!.InputPorts
-            .All(inputPort => IsReadyDataIn(node, inputPort));
+            .All(inputPort => IsReadyPort(node, inputPort));
     }
 
-    private bool IsReadyDataIn(Node node, InputPort inputPort)
+    private bool IsReadyPort(Node node, InputPort inputPort)
     {
         if (inputPort.IsParameter)
         {
@@ -227,13 +226,32 @@ public sealed class NodeGraphProcessor
         return outputPortResult is not null;
     }
 
-    private Dictionary<string, NodeOperationResult> ConsumeInputsFor(Node node)
+    private void ConsumeIncomingDataOf(Node node)
     {
-        var inputs = new Dictionary<string, NodeOperationResult>();
+        node!.InputPorts.ForEach(inputPort =>
+        {
+            if (inputPort.IsParameter)
+            {
+                return;
+            }
+            var incomingLinks = _graph.FindIncomingLinksTo(node.Id, inputPort.Name);
+            incomingLinks.ForEach(link =>
+            {
+                CleanupOutputPort(link.SrcNodeId, link.SrcPortName);
+            });
+        });
+    }
 
-        // Check if all input ports are filled by previous node
-        // TODO: Pop data in srouce of incomming links
-        return inputs;
+    private void CleanupOutputPort(Guid nodeId, string portName)
+    {
+        var outputPortResults = _outputPortResults.GetValueOrDefault(nodeId);
+        if (outputPortResults is null)
+        {
+            throw new Exception($"Port Results for Node(Id: {nodeId}) is not found.");
+        }
+
+        outputPortResults!.Remove(portName);
+        // IF need data, Pop
     }
 
 

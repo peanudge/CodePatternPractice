@@ -25,6 +25,15 @@ var nodeC = new Node
 nodeC.AddInputPort(new InputPort { Name = "Input" });
 nodeC.AddOutputPort(new OutputPort { Name = "Output" });
 
+
+var nodeD = new Node
+{
+    Id = Guid.NewGuid(),
+    Name = "NodeD",
+};
+nodeD.AddInputPort(new InputPort { Name = "Input" });
+nodeD.AddOutputPort(new OutputPort { Name = "Output" });
+
 var linkAB = new NodeLink
 {
     SrcNodeId = nodeA.Id,
@@ -41,9 +50,25 @@ var linkBC = new NodeLink
     DestPortName = nodeC.InputPorts[0].Name
 };
 
+var linkCD = new NodeLink
+{
+    SrcNodeId = nodeC.Id,
+    SrcPortName = nodeC.OutputPorts[0].Name,
+    DestNodeId = nodeD.Id,
+    DestPortName = nodeD.InputPorts[0].Name
+};
+
+var linkDB_Loopback = new NodeLink
+{
+    SrcNodeId = nodeD.Id,
+    SrcPortName = nodeD.OutputPorts[0].Name,
+    DestNodeId = nodeB.Id,
+    DestPortName = nodeB.InputPorts[0].Name
+};
+
 var graph1 = new NodeGraph(
-    new List<Node> { nodeA, nodeB, nodeC },
-    new List<NodeLink> { linkAB, linkBC }
+    new List<Node> { nodeA, nodeB, nodeC, nodeD },
+    new List<NodeLink> { linkAB, linkBC, linkCD, linkDB_Loopback }
 );
 
 // Merge Graph
@@ -67,7 +92,7 @@ var mergedGraph = graph1;
 
 var options = new NodeGraphProcessorOptions()
 {
-    RoundIntervalMs = 0,
+    RoundIntervalMs = 1000,
     NodeOperationDelayMs = 0,
 };
 
