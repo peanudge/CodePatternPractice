@@ -64,9 +64,9 @@ function createReactFlowEdge(data: GraphNodeLink): Edge<GraphNodeLink> {
     target: data.destNodeId,
     sourceHandle: data.srcPortName,
     targetHandle: data.destPortName,
-    animated: true,
-    type: "step",
-    markerEnd: { type: MarkerType.Arrow },
+    animated: false,
+    type: "default",
+    markerEnd: { type: MarkerType.ArrowClosed },
     data,
   };
 }
@@ -114,12 +114,12 @@ export default function App() {
           if (runningNodeIds.includes(nd.data.id)) {
             return {
               ...nd,
-              style: { background: "#00e676", borderRadius: "100%" },
+              style: { background: "#00e676" },
             };
           } else {
             return {
               ...nd,
-              style: { background: "white", borderRadius: "100%" },
+              style: { background: "white" },
             };
           }
         })
@@ -184,14 +184,12 @@ export default function App() {
         return eds;
       }
 
-      const newEdge = {
-        source: newConnection.source,
-        target: newConnection.target,
-        sourceHandle: newConnection.sourceHandle,
-        targetHandle: newConnection.targetHandle,
-        animated: true,
-        type: "step",
-      };
+      const newEdge = createReactFlowEdge({
+        srcNodeId: newConnection.source!,
+        srcPortName: newConnection.sourceHandle!,
+        destNodeId: newConnection.target!,
+        destPortName: newConnection.targetHandle!,
+      });
       return addEdge(newEdge, eds);
     });
 
