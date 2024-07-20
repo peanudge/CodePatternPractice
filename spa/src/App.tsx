@@ -168,11 +168,6 @@ export default function App() {
           ed.targetHandle === newConnection.targetHandle
       );
 
-      if (linksConnectedInputPort.length !== 0) {
-        alert("Target Input Port Already Connected");
-        return eds;
-      }
-
       const duplicated = linksConnectedInputPort.some(
         (ed) =>
           ed.source === newConnection.source &&
