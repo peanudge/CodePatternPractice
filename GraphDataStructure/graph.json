@@ -1,7 +1,7 @@
 {
   "nodes": [
     {
-      "id": "910900d1-701b-4bc6-9c4a-f8947dbb51e3",
+      "id": "a06e9a2b-7724-47cd-b104-3d057375d4a3",
       "name": "NodeA",
       "inputPorts": [],
       "outputPorts": [
@@ -11,7 +11,7 @@
       ]
     },
     {
-      "id": "68f299de-53f9-4222-9de7-1f2a2201f556",
+      "id": "4006ef07-a37d-4d94-8a49-417f2389befa",
       "name": "NodeB",
       "inputPorts": [
         {
@@ -26,7 +26,7 @@
       ]
     },
     {
-      "id": "027fcd71-d210-4b4e-973b-babb1228170b",
+      "id": "a8dd287f-1200-4e77-8f22-b2e348e9814e",
       "name": "NodeC",
       "inputPorts": [
         {
@@ -39,56 +39,20 @@
           "name": "Output"
         }
       ]
-    },
-    {
-      "id": "37ec6d23-6401-40ba-8bea-db1bc209a8cc",
-      "name": "RelayNode1",
-      "inputPorts": [
-        {
-          "name": "Start",
-          "isParameter": true
-        }
-      ],
-      "outputPorts": [
-        {
-          "name": "End"
-        }
-      ]
-    },
-    {
-      "id": "811e2f8a-306e-4ae5-9b24-df9de529ded8",
-      "name": "RelayNode2",
-      "inputPorts": [
-        {
-          "name": "Start",
-          "isParameter": false
-        }
-      ],
-      "outputPorts": [
-        {
-          "name": "End"
-        }
-      ]
     }
   ],
   "links": [
     {
-      "srcNodeId": "910900d1-701b-4bc6-9c4a-f8947dbb51e3",
+      "srcNodeId": "a06e9a2b-7724-47cd-b104-3d057375d4a3",
       "srcPortName": "Output",
-      "destNodeId": "68f299de-53f9-4222-9de7-1f2a2201f556",
+      "destNodeId": "4006ef07-a37d-4d94-8a49-417f2389befa",
       "destPortName": "Input"
     },
     {
-      "srcNodeId": "68f299de-53f9-4222-9de7-1f2a2201f556",
+      "srcNodeId": "4006ef07-a37d-4d94-8a49-417f2389befa",
       "srcPortName": "Output",
-      "destNodeId": "027fcd71-d210-4b4e-973b-babb1228170b",
+      "destNodeId": "a8dd287f-1200-4e77-8f22-b2e348e9814e",
       "destPortName": "Input"
-    },
-    {
-      "srcNodeId": "37ec6d23-6401-40ba-8bea-db1bc209a8cc",
-      "srcPortName": "End",
-      "destNodeId": "811e2f8a-306e-4ae5-9b24-df9de529ded8",
-      "destPortName": "Start"
     }
   ]
 }

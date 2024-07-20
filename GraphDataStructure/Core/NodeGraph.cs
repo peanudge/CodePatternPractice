@@ -23,13 +23,13 @@ public class NodeGraph
         Links.AddRange(links);
     }
 
-    public List<NodeLink> FindConnectedLinksBySrcPort(Guid srcNodeId, string srcPortName)
+    public List<NodeLink> FindOutgoingLinksFrom(Guid srcNodeId, string srcPortName)
     {
         return Links.Where(link => link.SrcNodeId == srcNodeId && link.SrcPortName == srcPortName)
             .ToList();
     }
 
-    public List<NodeLink> FindConnectedLinksByDestPort(Guid destNodeId, string destPortName)
+    public List<NodeLink> FindIncomingLinksTo(Guid destNodeId, string destPortName)
     {
         return Links.Where(link => link.DestNodeId == destNodeId && link.DestPortName == destPortName)
             .ToList();

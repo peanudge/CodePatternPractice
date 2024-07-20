@@ -89,6 +89,7 @@ public sealed class NodeGraphProcessor
             while (!_nodeCompleteEventQueue.IsEmpty)
             {
                 _nodeCompleteEventQueue.TryDequeue(out var nodeCompleteEvent);
+
                 var completedNodeId = nodeCompleteEvent!.NodeId;
 
                 _currentRunningNodes.Remove(completedNodeId);
@@ -128,6 +129,9 @@ public sealed class NodeGraphProcessor
                 {
                     continue;
                 }
+
+                // INFO: If the node is ready to start, Consume Previsous NodeOperationResult.
+                ConsumeInputsFor(nextNode);
 
                 // Start the next node
                 var nodeOperationTask = Task.Run(async () =>
@@ -184,38 +188,52 @@ public sealed class NodeGraphProcessor
 
     private bool IsReadyToStart(Node node)
     {
-        var isReady = true;
-
         // Check if all input ports are filled by previous node
-        foreach (var inputPort in node!.InputPorts)
+        return node!.InputPorts
+            .All(inputPort => IsReadyDataIn(node, inputPort));
+    }
+
+    private bool IsReadyDataIn(Node node, InputPort inputPort)
+    {
+        if (inputPort.IsParameter)
         {
-            if (inputPort.IsParameter)
-            {
-                continue;
-            }
-
-            var connectedLinks = _graph.FindConnectedLinksByDestPort(node.Id, inputPort.Name);
-            var link = connectedLinks.FirstOrDefault();
-            if (link is null)
-            {
-                // INFO: Not Allow Input Port is not connected.
-                throw new Exception($"Link connected with port (NodeId: {node.Id}, PortName: {inputPort.Name}) is not found.");
-            }
-
-            var prevNodeId = link.SrcNodeId;
-            var prevNodeOutputPortName = link.SrcPortName;
-
-            _outputPortResults.TryGetValue(prevNodeId, out var outputPortResults);
-
-            var matchedOutputPortResult = outputPortResults!.GetValueOrDefault(prevNodeOutputPortName);
-            if (matchedOutputPortResult is null)
-            {
-                isReady = false;
-                break;
-            }
+            return true;
         }
 
-        return isReady;
+        var incomingLinks = _graph.FindIncomingLinksTo(node.Id, inputPort.Name);
+        if (incomingLinks.Count == 0)
+        {
+            // INFO: Not Allow Input Port is not connected.
+            return false;
+        }
+
+        // If incoming links include loopback link, there are more than one incoming link.
+        var hasReadyAnyIncomingLink = incomingLinks.Any(
+            link => HasDataInPort(link.SrcNodeId, link.SrcPortName)
+        );
+
+        return hasReadyAnyIncomingLink;
+    }
+
+    private bool HasDataInPort(Guid nodeId, string portName)
+    {
+        var outputPortResults = _outputPortResults.GetValueOrDefault(nodeId);
+        if (outputPortResults is null)
+        {
+            throw new Exception($"Port Results for Node(Id: {nodeId}) is not found.");
+        }
+
+        var outputPortResult = outputPortResults!.GetValueOrDefault(portName);
+        return outputPortResult is not null;
+    }
+
+    private Dictionary<string, NodeOperationResult> ConsumeInputsFor(Node node)
+    {
+        var inputs = new Dictionary<string, NodeOperationResult>();
+
+        // Check if all input ports are filled by previous node
+        // TODO: Pop data in srouce of incomming links
+        return inputs;
     }
 
 
@@ -224,27 +242,24 @@ public sealed class NodeGraphProcessor
         var nextNodeIds = new List<Guid>();
         foreach (var outputPort in currentNode.OutputPorts)
         {
-            var connectedLinks = _graph.FindConnectedLinksBySrcPort(
+            var outgoingLinks = _graph.FindOutgoingLinksFrom(
                 srcNodeId: currentNode.Id,
                 srcPortName: outputPort.Name
             );
 
-            var hasCycleLink = connectedLinks
+            var hasLinkToSelf = outgoingLinks
                 .Where(link =>
                     link.SrcNodeId == link.DestNodeId &&
                     link.SrcPortName == link.DestPortName)
                 .Any();
 
-            if (hasCycleLink)
+            if (hasLinkToSelf)
             {
-                throw new Exception($"Cycle Link is detected. (NodeId: {currentNode.Id}, PortName: {outputPort.Name})");
+                throw new Exception($"Self Cycle Link is detected. (NodeId: {currentNode.Id}, PortName: {outputPort.Name})");
             }
 
-            foreach (var link in connectedLinks)
-            {
-                var nextNodeId = link.DestNodeId;
-                nextNodeIds.Add(nextNodeId);
-            }
+            outgoingLinks
+                .ForEach(link => nextNodeIds.Add(link.DestNodeId));
         }
         return nextNodeIds;
     }

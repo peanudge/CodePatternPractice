@@ -47,27 +47,31 @@ var graph1 = new NodeGraph(
 );
 
 // Merge Graph
-var relayNode1 = new RelayNode("RelayNode1");
-relayNode1.StartPort.IsParameter = true;
+// var relayNode1 = new RelayNode("RelayNode1");
+// relayNode1.StartPort.IsParameter = true;
+// var relayNode2 = new RelayNode("RelayNode2");
+// var relayNodelink = new NodeLink()
+// {
+//     SrcNodeId = relayNode1.Id,
+//     SrcPortName = relayNode1.EndPort.Name,
+//     DestNodeId = relayNode2.Id,
+//     DestPortName = relayNode2.StartPort.Name
+// };
+// var graph2 = new NodeGraph(
+//     new List<Node> { relayNode1, relayNode2 },
+//     new List<NodeLink> { relayNodelink }
+// );
 
-var relayNode2 = new RelayNode("RelayNode2");
+// var mergedGraph = graph1.Merge(graph2);
+var mergedGraph = graph1;
 
-var relayNodelink = new NodeLink()
+var options = new NodeGraphProcessorOptions()
 {
-    SrcNodeId = relayNode1.Id,
-    SrcPortName = relayNode1.EndPort.Name,
-    DestNodeId = relayNode2.Id,
-    DestPortName = relayNode2.StartPort.Name
+    RoundIntervalMs = 0,
+    NodeOperationDelayMs = 0,
 };
 
-var graph2 = new NodeGraph(
-    new List<Node> { relayNode1, relayNode2 },
-    new List<NodeLink> { relayNodelink }
-);
-
-var mergedGraph = graph1.Merge(graph2);
-
-var nodeGraphProcessor = new NodeGraphProcessor(mergedGraph);
+var nodeGraphProcessor = new NodeGraphProcessor(mergedGraph, options);
 
 try
 {
