@@ -86,6 +86,23 @@ export default function App() {
     GraphProcesssingInfo | undefined
   >(undefined);
 
+  const createNodeGraphFromCurrentNode = (
+    nodes: Node<GraphNode>[],
+    edges: Edge<GraphNodeLink>[]
+  ) => {
+    const graphNodes = nodes.map((nd) => nd.data!);
+    const graphLinks = edges.map((ed) => ed.data!);
+    return {
+      nodes: graphNodes,
+      links: graphLinks,
+    };
+  };
+
+  useEffect(() => {
+    const newGraph = createNodeGraphFromCurrentNode(nodes, edges);
+    setGraphTextData(JSON.stringify(newGraph, null, 2));
+  }, [edges, nodes]);
+
   const refreshGraphData = (data: NodeGraph) => {
     setGraph(data);
     setGraphTextData(JSON.stringify(data, null, 2));
@@ -185,6 +202,7 @@ export default function App() {
         destNodeId: newConnection.target!,
         destPortName: newConnection.targetHandle!,
       });
+
       return addEdge(newEdge, eds);
     });
 
@@ -250,7 +268,7 @@ export default function App() {
               }
             }}
           >
-            Update Only Graph
+            Update Only Client Graph
           </button>
           <button
             onClick={async () => {
