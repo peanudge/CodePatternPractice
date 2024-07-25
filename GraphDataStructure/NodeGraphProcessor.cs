@@ -4,7 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace GraphDataStructure;
 
 public record NodeOperationResult(bool IsSuccess, string? ErrorMessage = null);
-public record NextNodeStartEvent(Guid NodeId);
+public record NextNodeStartEvent(Guid NodeId, bool byLoop = false);
 public record NodeCompleteEvent(Guid NodeId);
 
 
@@ -23,11 +23,9 @@ public sealed class NodeGraphProcessor
     private readonly Queue<NextNodeStartEvent> _nextNodeStartEventQueue = new();
     private bool _isRunning = false;
 
-
     public List<Guid> CurrentRunningNodeIds => _currentRunningNodes.Keys.ToList();
     public bool IsRunning => _isRunning;
     public bool IsEnd => !_isRunning;
-
 
     private int RoundInterval { get; set; }
     private int NodeOperationDelay { get; set; }
@@ -35,16 +33,25 @@ public sealed class NodeGraphProcessor
     public NodeGraphProcessor(NodeGraph graph, NodeGraphProcessorOptions? options = null)
     {
         _graph = graph;
-        InitializeOutputResults();
+        Initialize();
 
         RoundInterval = options?.RoundIntervalMs ?? 500;
         NodeOperationDelay = options?.NodeOperationDelayMs ?? 300;
     }
 
+    public void Initialize()
+    {
+        InitializeOutputResults();
+
+        _nodeCompleteEventQueue.Clear();
+        _nextNodeStartEventQueue.Clear();
+        _currentRunningNodes.Select(task => task);
+    }
+
     /// <summary>
     /// Initialize OutputResults as HashTable
     /// </summary>
-    public void InitializeOutputResults()
+    private void InitializeOutputResults()
     {
         foreach (var node in _graph.Nodes)
         {
@@ -57,10 +64,11 @@ public sealed class NodeGraphProcessor
         }
     }
 
+
     // TODO: Implement Break points between each steps
     public void Start(CancellationToken cancellationToken = default)
     {
-        InitializeOutputResults();
+        Initialize();
 
         _isRunning = true;
 
@@ -100,11 +108,11 @@ public sealed class NodeGraphProcessor
 
                 FindNextNodes(completedNode).ForEach(nextNodeId =>
                 {
+                    // TODO: Check if next node is triggered by loopback link
+                    // new NextNodeStartEvent(nextNodeId, byLoop: true)
                     _nextNodeStartEventQueue.Enqueue(new NextNodeStartEvent(nextNodeId));
                 });
             }
-
-            // TODO: Break Point before start next round
 
             var nextNodeIds = new HashSet<Guid>();
             while (!_nextNodeStartEventQueue.IsNullOrEmpty())
@@ -112,8 +120,6 @@ public sealed class NodeGraphProcessor
                 var nextNodeStartEvent = _nextNodeStartEventQueue.Dequeue();
                 nextNodeIds.Add(nextNodeStartEvent.NodeId);
             }
-
-            // TODO: Show Waiting Node to User for better understanding situation
 
             foreach (var nextNodeId in nextNodeIds)
             {
@@ -128,10 +134,9 @@ public sealed class NodeGraphProcessor
                     continue;
                 }
 
-                // INFO: If the node is ready to start, Consume Previsous NodeOperationResult.
-                ConsumeIncomingDataOf(nextNode);
+                // TODO: If started by loopback link,
+                // Cleanup the output results of nodes in cycle triggered by this node
 
-                // Start the next node
                 var nodeOperationTask = Task.Run(async () =>
                 {
                     var currentNode = nextNode;
@@ -149,21 +154,21 @@ public sealed class NodeGraphProcessor
                     }
                     finally
                     {
-                        // Fill the output results for finding next nodes
                         foreach (var outputPort in currentNode.OutputPorts)
                         {
                             _outputPortResults.TryGetValue(currentNode.Id, out var outputPortResult);
 
-                            // TODO: IF Node is Primitive, Arithmetic, Logical Node,
                             // You should implement different output port filling logic.
+
                             outputPortResult![outputPort.Name] = new NodeOperationResult(IsSuccess: isSuccess, errorMessage);
                         }
 
-                        // Send Signal to move next node
                         _nodeCompleteEventQueue.Enqueue(new NodeCompleteEvent(currentNode.Id));
                     }
                 }, cancellationToken);
 
+
+                // TODO: Create Cancelllation Token for stopping nodeOperationTask.
                 _currentRunningNodes.TryAdd(nextNodeId, nodeOperationTask);
             }
 
@@ -204,12 +209,15 @@ public sealed class NodeGraphProcessor
             return false;
         }
 
-        // If incoming links include loopback link, there are more than one incoming link.
-        var hasReadyAnyIncomingLink = incomingLinks.Any(
+        // TODO: Check whether all inputs is ready, except inputs from loopback link
+        // Except loopback link, All link sholud have data.
+
+
+        var isReadyAllIncomingLinks = incomingLinks.All(
             link => HasDataInPort(link.SrcNodeId, link.SrcPortName)
         );
 
-        return hasReadyAnyIncomingLink;
+        return isReadyAllIncomingLinks;
     }
 
     private bool HasDataInPort(Guid nodeId, string portName)
@@ -223,35 +231,6 @@ public sealed class NodeGraphProcessor
         var outputPortResult = outputPortResults!.GetValueOrDefault(portName);
         return outputPortResult is not null;
     }
-
-    private void ConsumeIncomingDataOf(Node node)
-    {
-        node!.InputPorts.ForEach(inputPort =>
-        {
-            if (inputPort.IsParameter)
-            {
-                return;
-            }
-            var incomingLinks = _graph.FindIncomingLinksTo(node.Id, inputPort.Name);
-            incomingLinks.ForEach(link =>
-            {
-                CleanupOutputPort(link.SrcNodeId, link.SrcPortName);
-            });
-        });
-    }
-
-    private void CleanupOutputPort(Guid nodeId, string portName)
-    {
-        var outputPortResults = _outputPortResults.GetValueOrDefault(nodeId);
-        if (outputPortResults is null)
-        {
-            throw new Exception($"Port Results for Node(Id: {nodeId}) is not found.");
-        }
-
-        outputPortResults!.Remove(portName);
-        // IF need data, Pop
-    }
-
 
     private List<Guid> FindNextNodes(Node currentNode)
     {
