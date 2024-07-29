@@ -2,11 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace GraphDataStructure;
 
-// Factory NodeGraph
-// 1. Create Nodes
-// 2. Create Edges
-// 3. Link Node's Ports with Edges
-
 public class NodeGraph
 {
     public List<Node> Nodes { get; set; } = new();
@@ -34,19 +29,20 @@ public class NodeGraph
         return Links.Where(link => link.DestNodeId == destNodeId && link.DestPortName == destPortName)
             .ToList();
     }
+}
 
-    public NodeGraph Merge(NodeGraph nodeGraph)
-    {
-        return new NodeGraph(
-            Nodes.Concat(nodeGraph.Nodes).ToList(),
-            Links.Concat(nodeGraph.Links).ToList()
-        );
-    }
+public enum NodeType
+{
+    Entry = 0,
+    Exit = 1,
+    Action = 2,
+    Conditional = 3,
 }
 
 public class Node
 {
     public Guid Id { get; set; }
+    public NodeType Type { get; set; } = NodeType.Action;
     public string Name { get; set; } = default!;
     public List<InputPort> InputPorts { get; set; } = new();
     public List<OutputPort> OutputPorts { get; set; } = new();
