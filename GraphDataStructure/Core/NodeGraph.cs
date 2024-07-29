@@ -68,11 +68,16 @@ public class Node
     }
 }
 
+public enum InputPortType
+{
+    DataFlow = 0,
+    Parameter = 1,
+}
+
 public class InputPort
 {
     public string Name { get; set; } = null!;
-
-    public bool IsParameter { get; set; } = false;
+    public InputPortType Type { get; set; } = InputPortType.DataFlow;
 }
 
 public class OutputPort

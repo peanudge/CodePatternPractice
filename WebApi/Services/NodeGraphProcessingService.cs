@@ -1,11 +1,12 @@
 using GraphDataStructure;
+using GraphDataStructure.NodeGraphProcessor;
 
 namespace WebApi.Services;
 
 public class NodeGraphProcessingService : IDisposable
 {
     // Only One Graph Processing at a time
-    public NodeGraphProcessor? CurrentGraphProcessor { get; set; }
+    public DataFlowGraphProcessor? CurrentGraphProcessor { get; set; }
 
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
@@ -21,7 +22,7 @@ public class NodeGraphProcessingService : IDisposable
             return false;
         }
 
-        CurrentGraphProcessor = new NodeGraphProcessor(nodeGraph, options);
+        CurrentGraphProcessor = new DataFlowGraphProcessor(nodeGraph, options);
 
         Task.Run(() =>
         {

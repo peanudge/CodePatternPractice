@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using GraphDataStructure;
+using GraphDataStructure.NodeGraphProcessor;
 
 var graphFilePath = Path.Combine(Environment.CurrentDirectory, "graph.json");
 
@@ -15,7 +16,6 @@ var jsonSerializerOptions = new JsonSerializerOptions
     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     IncludeFields = false,
 };
-
 
 var text = File.ReadAllText(graphFilePath);
 

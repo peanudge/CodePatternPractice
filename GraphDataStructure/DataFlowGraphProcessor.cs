@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using Microsoft.IdentityModel.Tokens;
 
-namespace GraphDataStructure;
+namespace GraphDataStructure.NodeGraphProcessor;
 
 public record NodeOperationResult(bool IsSuccess, string? ErrorMessage = null);
-public record NextNodeStartEvent(Guid NodeId, bool byLoop = false);
+public record NextNodeStartEvent(Guid NodeId);
 public record NodeCompleteEvent(Guid NodeId);
 
 
@@ -14,7 +14,7 @@ public class NodeGraphProcessorOptions
     public int NodeOperationDelayMs { get; set; }
 }
 
-public sealed class NodeGraphProcessor
+public sealed class DataFlowGraphProcessor
 {
     private readonly NodeGraph _graph;
     private readonly Dictionary<Guid, Dictionary<string, NodeOperationResult?>> _outputPortResults = new();
@@ -30,7 +30,7 @@ public sealed class NodeGraphProcessor
     private int RoundInterval { get; set; }
     private int NodeOperationDelay { get; set; }
 
-    public NodeGraphProcessor(NodeGraph graph, NodeGraphProcessorOptions? options = null)
+    public DataFlowGraphProcessor(NodeGraph graph, NodeGraphProcessorOptions? options = null)
     {
         _graph = graph;
         Initialize();
@@ -45,7 +45,6 @@ public sealed class NodeGraphProcessor
 
         _nodeCompleteEventQueue.Clear();
         _nextNodeStartEventQueue.Clear();
-        _currentRunningNodes.Select(task => task);
     }
 
     /// <summary>
@@ -70,18 +69,19 @@ public sealed class NodeGraphProcessor
     {
         Initialize();
 
-        _isRunning = true;
+        // TODO: Validate if Graph have loop, jump
 
-        // Find & Start the first node.
+        // Find & Start the first nodes.
         var startNodes = _graph.Nodes
-           .Where(n => n.InputPorts.Where(p => p.IsParameter == false).Count() == 0)
+           .Where(n => n.InputPorts.Where(p => p.Type == InputPortType.DataFlow).Count() == 0)
            .ToList();
 
         if (startNodes.Count == 0)
         {
-            _isRunning = false;
             return;
         }
+
+        _isRunning = true;
 
         startNodes.ForEach(startNode =>
         {
@@ -108,13 +108,12 @@ public sealed class NodeGraphProcessor
 
                 FindNextNodes(completedNode).ForEach(nextNodeId =>
                 {
-                    // TODO: Check if next node is triggered by loopback link
-                    // new NextNodeStartEvent(nextNodeId, byLoop: true)
                     _nextNodeStartEventQueue.Enqueue(new NextNodeStartEvent(nextNodeId));
                 });
             }
 
             var nextNodeIds = new HashSet<Guid>();
+
             while (!_nextNodeStartEventQueue.IsNullOrEmpty())
             {
                 var nextNodeStartEvent = _nextNodeStartEventQueue.Dequeue();
@@ -133,9 +132,6 @@ public sealed class NodeGraphProcessor
                 {
                     continue;
                 }
-
-                // TODO: If started by loopback link,
-                // Cleanup the output results of nodes in cycle triggered by this node
 
                 var nodeOperationTask = Task.Run(async () =>
                 {
@@ -167,8 +163,6 @@ public sealed class NodeGraphProcessor
                     }
                 }, cancellationToken);
 
-
-                // TODO: Create Cancelllation Token for stopping nodeOperationTask.
                 _currentRunningNodes.TryAdd(nextNodeId, nodeOperationTask);
             }
 
@@ -178,7 +172,6 @@ public sealed class NodeGraphProcessor
 
         _isRunning = false;
     }
-
 
     // TODO: Implement Node Operation Logic
     private async Task RunNodeAsync(Node node)
@@ -192,12 +185,12 @@ public sealed class NodeGraphProcessor
     {
         // Check if all input ports are filled by previous node
         return node!.InputPorts
-            .All(inputPort => IsReadyPort(node, inputPort));
+            .All(inputPort => IsReadyInputPort(node, inputPort));
     }
 
-    private bool IsReadyPort(Node node, InputPort inputPort)
+    private bool IsReadyInputPort(Node node, InputPort inputPort)
     {
-        if (inputPort.IsParameter)
+        if (inputPort.Type == InputPortType.Parameter)
         {
             return true;
         }
@@ -208,10 +201,6 @@ public sealed class NodeGraphProcessor
             // INFO: Not Allow Input Port is not connected.
             return false;
         }
-
-        // TODO: Check whether all inputs is ready, except inputs from loopback link
-        // Except loopback link, All link sholud have data.
-
 
         var isReadyAllIncomingLinks = incomingLinks.All(
             link => HasDataInPort(link.SrcNodeId, link.SrcPortName)
@@ -242,13 +231,13 @@ public sealed class NodeGraphProcessor
                 srcPortName: outputPort.Name
             );
 
-            var hasLinkToSelf = outgoingLinks
+            var hasSelfLink = outgoingLinks
                 .Where(link =>
                     link.SrcNodeId == link.DestNodeId &&
                     link.SrcPortName == link.DestPortName)
                 .Any();
 
-            if (hasLinkToSelf)
+            if (hasSelfLink)
             {
                 throw new Exception($"Self Cycle Link is detected. (NodeId: {currentNode.Id}, PortName: {outputPort.Name})");
             }
@@ -257,5 +246,15 @@ public sealed class NodeGraphProcessor
                 .ForEach(link => nextNodeIds.Add(link.DestNodeId));
         }
         return nextNodeIds;
+    }
+
+    public (bool IsValid, string ErrorMessage) ValidateDFGRules()
+    {
+        if (!DataFlowGraphValidator.ValidateAcyclicGraph(_graph)) return (false, "Data Flow Graph should be acyclic.");
+        if (!DataFlowGraphValidator.ValidateIncomingLinks(_graph)) return (false, "Data Flow Graph's inputs should be connected with only one output");
+        if (!DataFlowGraphValidator.ValidateUniqueEntry(_graph)) return (false, "Data Flow Graph should have one entry node.");
+        if (!DataFlowGraphValidator.ValidateUniqueExit(_graph)) return (false, "Data Flow Graph should have one exit node.");
+
+        return (true, string.Empty);
     }
 }
